@@ -1,17 +1,43 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Mail, ArrowRight, CheckCircle } from "lucide-react";
+import { Mail, ArrowRight, CheckCircle, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const Newsletter = () => {
   const [email, setEmail] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email) {
+    if (!email) return;
+
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-newsletter", {
+        body: { email },
+      });
+
+      if (error) throw error;
+
       setIsSubmitted(true);
       setEmail("");
+      toast({
+        title: "Subscribed!",
+        description: "Check your inbox for a welcome email.",
+      });
+    } catch (error: any) {
+      console.error("Newsletter subscription error:", error);
+      toast({
+        title: "Subscription failed",
+        description: error.message || "Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -51,9 +77,15 @@ const Newsletter = () => {
                 className="h-12 bg-secondary border-border focus:border-primary"
                 required
               />
-              <Button type="submit" variant="hero" size="lg" className="shrink-0">
-                Subscribe
-                <ArrowRight className="w-4 h-4 ml-2" />
+              <Button type="submit" variant="hero" size="lg" className="shrink-0" disabled={isLoading}>
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    Subscribe
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </>
+                )}
               </Button>
             </form>
           )}
