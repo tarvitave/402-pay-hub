@@ -31,10 +31,17 @@ const Hero = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "You're subscribed!",
-        description: "Thanks for joining our newsletter.",
-      });
+      if (data?.alreadySubscribed) {
+        toast({
+          title: "Already subscribed!",
+          description: "This email is already on our mailing list.",
+        });
+      } else {
+        toast({
+          title: "You're subscribed!",
+          description: "Thanks for joining our newsletter.",
+        });
+      }
       setEmail("");
     } catch (error: any) {
       console.error("Subscription error:", error);

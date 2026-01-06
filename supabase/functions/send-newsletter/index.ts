@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -23,6 +24,47 @@ const handler = async (req: Request): Promise<Response> => {
       return new Response(
         JSON.stringify({ error: "Email is required" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Check if email already exists
+    const { data: existingSubscriber, error: checkError } = await supabase
+      .from("subscribers")
+      .select("id")
+      .eq("email", email.toLowerCase().trim())
+      .maybeSingle();
+
+    if (checkError) {
+      console.error("Error checking subscriber:", checkError);
+      return new Response(
+        JSON.stringify({ error: "Failed to check subscription status" }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    if (existingSubscriber) {
+      console.log(`Email already subscribed: ${email}`);
+      return new Response(
+        JSON.stringify({ alreadySubscribed: true, message: "You're already subscribed!" }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Add subscriber to database
+    const { error: insertError } = await supabase
+      .from("subscribers")
+      .insert({ email: email.toLowerCase().trim() });
+
+    if (insertError) {
+      console.error("Error inserting subscriber:", insertError);
+      return new Response(
+        JSON.stringify({ error: "Failed to save subscription" }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
