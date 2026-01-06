@@ -68,11 +68,11 @@ const Footer = () => {
             © {new Date().getFullYear()} x402info. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
-            <Link to="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Privacy
+            <Link to="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Privacy Policy
             </Link>
-            <Link to="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Terms
+            <Link to="/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Terms of Service
             </Link>
           </div>
         </div>
