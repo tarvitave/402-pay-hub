@@ -46,8 +46,8 @@ const Navbar = () => {
 
           {/* CTA */}
           <div className="hidden md:flex items-center gap-4">
-            <Button variant="heroOutline" size="sm">
-              Subscribe
+            <Button asChild variant="heroOutline" size="sm">
+              <a href="#newsletter">Subscribe</a>
             </Button>
           </div>
 
@@ -74,8 +74,8 @@ const Navbar = () => {
                   {link.label}
                 </Link>
               ))}
-              <Button variant="hero" size="sm" className="mt-2">
-                Subscribe
+              <Button asChild variant="hero" size="sm" className="mt-2">
+                <a href="#newsletter" onClick={() => setIsMenuOpen(false)}>Subscribe</a>
               </Button>
             </div>
           </div>
