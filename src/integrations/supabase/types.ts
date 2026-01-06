@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      email_events: {
+        Row: {
+          bounce_description: string | null
+          bounce_type: string | null
+          bounced_at: string | null
+          clicked_at: string | null
+          created_at: string
+          delivered_at: string | null
+          event_type: string
+          id: string
+          link_clicked: string | null
+          message_id: string | null
+          opened_at: string | null
+          raw_payload: Json | null
+          recipient: string
+          user_agent: string | null
+        }
+        Insert: {
+          bounce_description?: string | null
+          bounce_type?: string | null
+          bounced_at?: string | null
+          clicked_at?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          event_type: string
+          id?: string
+          link_clicked?: string | null
+          message_id?: string | null
+          opened_at?: string | null
+          raw_payload?: Json | null
+          recipient: string
+          user_agent?: string | null
+        }
+        Update: {
+          bounce_description?: string | null
+          bounce_type?: string | null
+          bounced_at?: string | null
+          clicked_at?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          event_type?: string
+          id?: string
+          link_clicked?: string | null
+          message_id?: string | null
+          opened_at?: string | null
+          raw_payload?: Json | null
+          recipient?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       subscribers: {
         Row: {
           email: string
