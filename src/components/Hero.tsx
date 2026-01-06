@@ -1,7 +1,53 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Code2, Coins } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ArrowRight, Code2, Coins, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const Hero = () => {
+  const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email) {
+      toast({
+        title: "Email required",
+        description: "Please enter your email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('send-newsletter', {
+        body: { email },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "You're subscribed!",
+        description: "Thanks for joining our newsletter.",
+      });
+      setEmail("");
+    } catch (error: any) {
+      console.error("Subscription error:", error);
+      toast({
+        title: "Subscription failed",
+        description: error.message || "Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <section className="relative min-h-screen hero-gradient overflow-hidden pt-16">
       {/* Background effects */}
@@ -28,22 +74,33 @@ const Hero = () => {
           </h1>
 
           {/* Subtitle */}
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 animate-fade-in" style={{ animationDelay: "0.2s" }}>
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 animate-fade-in" style={{ animationDelay: "0.2s" }}>
             Explore the x402 protocol — enabling seamless micropayments, 
             pay-per-use APIs, and the next generation of internet commerce 
             through HTTP 402.
           </p>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16 animate-fade-in" style={{ animationDelay: "0.3s" }}>
-            <Button variant="hero" size="xl">
-              Get Started
-              <ArrowRight className="ml-2 h-5 w-5" />
+          {/* Subscribe Form */}
+          <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto mb-16 animate-fade-in" style={{ animationDelay: "0.3s" }}>
+            <Input
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="flex-1 h-12 bg-secondary/50 border-border"
+              disabled={isLoading}
+            />
+            <Button variant="hero" size="lg" type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <>
+                  Subscribe
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </>
+              )}
             </Button>
-            <Button variant="heroOutline" size="xl">
-              Read the Docs
-            </Button>
-          </div>
+          </form>
 
           {/* Code Preview */}
           <div className="relative max-w-2xl mx-auto animate-fade-in" style={{ animationDelay: "0.4s" }}>
