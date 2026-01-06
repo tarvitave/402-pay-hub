@@ -122,7 +122,7 @@ const handler = async (req: Request): Promise<Response> => {
           </div>
         `,
         TextBody: `Welcome to x402 Protocol Newsletter!\n\n${name ? `Hi ${name},` : 'Hi there,'}\n\nThank you for subscribing! You'll receive weekly insights on micropayments, protocol updates, and the future of web monetization.\n\nBest regards,\nThe x402 Protocol Team`,
-        MessageStream: "outbound",
+        MessageStream: "broadcast",
       }),
     });
 
