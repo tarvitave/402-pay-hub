@@ -9,28 +9,28 @@ const resources = [
     category: "Documentation",
     icon: Book,
     items: [
-      { title: "Protocol Specification", description: "The complete x402 protocol specification document", link: "#" },
-      { title: "Getting Started Guide", description: "Quick start guide for implementing x402", link: "#" },
-      { title: "API Reference", description: "Complete API documentation with examples", link: "#" },
+      { title: "Protocol Specification", description: "The complete x402 protocol specification document", link: "https://www.x402.org/" },
+      { title: "Getting Started Guide", description: "Quick start guide for implementing x402", link: "https://www.x402.org/#getting-started" },
+      { title: "API Reference", description: "Complete API documentation with examples", link: "https://www.x402.org/#api-reference" },
     ]
   },
   {
     category: "SDKs & Libraries",
     icon: Code,
     items: [
-      { title: "x402-node", description: "Node.js SDK for x402 protocol", link: "#", language: "JavaScript" },
-      { title: "x402-python", description: "Python library for x402 implementation", link: "#", language: "Python" },
-      { title: "x402-go", description: "Go package for x402 protocol", link: "#", language: "Go" },
-      { title: "x402-rust", description: "Rust crate for x402 implementation", link: "#", language: "Rust" },
+      { title: "x402-node", description: "Node.js SDK for x402 protocol", link: "https://github.com/coinbase/x402/tree/main/typescript", language: "JavaScript" },
+      { title: "x402-python", description: "Python library for x402 implementation", link: "https://github.com/coinbase/x402/tree/main/python", language: "Python" },
+      { title: "x402-go", description: "Go package for x402 protocol", link: "https://github.com/coinbase/x402/tree/main/go", language: "Go" },
+      { title: "x402-rust", description: "Rust crate for x402 implementation", link: "https://github.com/coinbase/x402/tree/main/rust", language: "Rust" },
     ]
   },
   {
     category: "Community",
     icon: Users,
     items: [
-      { title: "Discord Server", description: "Join 2,000+ developers discussing x402", link: "#", icon: MessageCircle },
-      { title: "GitHub Organization", description: "Contribute to open source implementations", link: "#", icon: Github },
-      { title: "Twitter/X", description: "Follow for protocol updates and news", link: "#" },
+      { title: "Discord Server", description: "Join developers discussing x402", link: "https://discord.gg/cdp", icon: MessageCircle },
+      { title: "GitHub Organization", description: "Contribute to open source implementations", link: "https://github.com/coinbase/x402", icon: Github },
+      { title: "Twitter/X", description: "Follow for protocol updates and news", link: "https://x.com/coinaboratorio" },
     ]
   },
 ];
