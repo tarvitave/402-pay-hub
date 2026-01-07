@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.postmark-webhook]
 verify_jwt = false
+
+[functions.send-invite]
+verify_jwt = false
