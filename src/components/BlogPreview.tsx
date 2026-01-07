@@ -4,6 +4,14 @@ import { Button } from "@/components/ui/button";
 
 const blogPosts = [
   {
+    id: 7,
+    title: "x402 Version 2: What's New in the Updated Specification",
+    excerpt: "The x402 protocol has evolved. Discover the major improvements in version 2, including enhanced payment schemes and multi-currency support.",
+    date: "2025-01-07",
+    readTime: "7 min read",
+    category: "Protocol",
+  },
+  {
     id: 1,
     title: "Understanding HTTP 402: The Original Vision",
     excerpt: "Dive into the history of the 402 status code and why it was reserved for future use in the original HTTP specification.",
@@ -18,14 +26,6 @@ const blogPosts = [
     date: "2024-12-28",
     readTime: "8 min read",
     category: "Opinion",
-  },
-  {
-    id: 3,
-    title: "Building Your First x402 API Endpoint",
-    excerpt: "A step-by-step tutorial on implementing payment-required endpoints using the x402 protocol with Node.js.",
-    date: "2024-12-20",
-    readTime: "12 min read",
-    category: "Tutorial",
   },
 ];
 
