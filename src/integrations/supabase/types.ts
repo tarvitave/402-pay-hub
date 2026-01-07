@@ -65,6 +65,57 @@ export type Database = {
         }
         Relationships: []
       }
+      invite_contacts: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          invited_at: string | null
+          name: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          invited_at?: string | null
+          name?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          invited_at?: string | null
+          name?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
+      invite_settings: {
+        Row: {
+          email_subject: string
+          email_template: string
+          emails_per_hour: number
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          email_subject?: string
+          email_template?: string
+          emails_per_hour?: number
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          email_subject?: string
+          email_template?: string
+          emails_per_hour?: number
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       subscribers: {
         Row: {
           email: string
