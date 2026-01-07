@@ -6,6 +6,16 @@ import { Calendar, Clock, ArrowRight } from "lucide-react";
 
 const blogPosts = [
   {
+    id: 7,
+    slug: "x402-version-2-whats-new",
+    title: "x402 Version 2: What's New in the Updated Specification",
+    excerpt: "The x402 protocol has evolved. Discover the major improvements in version 2, including enhanced payment schemes, better error handling, multi-currency support, and streamlined facilitator interactions.",
+    date: "2025-01-07",
+    readTime: "7 min read",
+    category: "Protocol",
+    featured: true,
+  },
+  {
     id: 1,
     slug: "understanding-http-402",
     title: "Understanding HTTP 402: The Original Vision",
