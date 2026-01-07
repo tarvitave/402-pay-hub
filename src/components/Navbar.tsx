@@ -8,6 +8,7 @@ const Navbar = () => {
 
   const navLinks = [
     { href: "/", label: "Home" },
+    { href: "/marketplace", label: "Marketplace", isNew: true },
     { href: "/about", label: "About x402" },
     { href: "/blog", label: "Blog" },
     { href: "/resources", label: "Resources" },
@@ -37,9 +38,14 @@ const Navbar = () => {
               <Link
                 key={link.href}
                 to={link.href}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="relative text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 {link.label}
+                {link.isNew && (
+                  <span className="absolute -top-2 -right-4 text-[10px] font-bold text-primary bg-primary/10 px-1 rounded">
+                    NEW
+                  </span>
+                )}
               </Link>
             ))}
           </div>
