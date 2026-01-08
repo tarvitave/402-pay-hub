@@ -46,69 +46,11 @@ const Marketplace = () => {
     } catch (err) {
       console.error('Error fetching bazaar resources:', err);
       setError('Failed to load marketplace data');
-      // Use fallback demo data
-      setResources(getDemoResources());
     } finally {
       setLoading(false);
     }
   };
 
-  const getDemoResources = (): Resource[] => [
-    {
-      url: "https://api.example.com/v1/ai/generate",
-      type: "http",
-      metadata: {
-        description: "AI text generation API with GPT-4 capabilities",
-        input: { prompt: "string", maxTokens: "number" },
-        output: { text: "string", tokens: "number" }
-      }
-    },
-    {
-      url: "https://api.weather.io/v2/forecast",
-      type: "http", 
-      metadata: {
-        description: "Real-time weather forecasting with 7-day predictions",
-        input: { location: "string", units: "string" },
-        output: { forecast: "array", temperature: "number" }
-      }
-    },
-    {
-      url: "https://api.translate.dev/v1/convert",
-      type: "http",
-      metadata: {
-        description: "Multi-language translation API supporting 100+ languages",
-        input: { text: "string", targetLang: "string" },
-        output: { translated: "string", confidence: "number" }
-      }
-    },
-    {
-      url: "https://api.image.ai/v1/analyze",
-      type: "http",
-      metadata: {
-        description: "Image analysis and object detection with ML models",
-        input: { imageUrl: "string", features: "array" },
-        output: { labels: "array", objects: "array" }
-      }
-    },
-    {
-      url: "https://api.sentiment.io/v1/analyze",
-      type: "http",
-      metadata: {
-        description: "Sentiment analysis for social media and reviews",
-        input: { text: "string" },
-        output: { sentiment: "string", score: "number" }
-      }
-    },
-    {
-      url: "https://api.blockchain.dev/v1/verify",
-      type: "http",
-      metadata: {
-        description: "Blockchain transaction verification service",
-        input: { txHash: "string", network: "string" },
-        output: { verified: "boolean", details: "object" }
-      }
-    }
-  ];
 
   const filteredResources = resources.filter(resource => {
     const searchLower = searchTerm.toLowerCase();
@@ -135,10 +77,10 @@ const Marketplace = () => {
   };
 
   const stats = [
-    { label: "Validated Servers", value: resources.length.toString(), icon: Server },
-    { label: "New This Week", value: "12", icon: TrendingUp },
-    { label: "Avg Trust Score", value: "94%", icon: Shield },
-    { label: "Total API Calls", value: "2.4M", icon: Zap },
+    { label: "Discovered APIs", value: resources.length.toString(), icon: Server },
+    { label: "Protocol", value: "x402", icon: TrendingUp },
+    { label: "Network", value: "Live", icon: Shield },
+    { label: "Status", value: "Active", icon: Zap },
   ];
 
   return (
@@ -190,9 +132,25 @@ const Marketplace = () => {
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <span className="ml-2 text-muted-foreground">Loading marketplace...</span>
             </div>
-          ) : error && resources.length === 0 ? (
+          ) : error ? (
             <div className="text-center py-20 text-muted-foreground">
               {error}
+            </div>
+          ) : resources.length === 0 ? (
+            <div className="text-center py-20">
+              <Globe className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
+              <h3 className="text-xl font-semibold mb-2">No APIs Discovered Yet</h3>
+              <p className="text-muted-foreground max-w-md mx-auto">
+                The x402 Bazaar is a new protocol. APIs will appear here as developers register their HTTP 402 payment-enabled endpoints.
+              </p>
+              <a 
+                href="https://docs.cdp.coinbase.com/x402/bazaar" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 mt-4 text-primary hover:underline"
+              >
+                Learn how to register your API <ExternalLink className="h-4 w-4" />
+              </a>
             </div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -257,44 +215,24 @@ const Marketplace = () => {
             </div>
           )}
 
-          {filteredResources.length === 0 && !loading && (
+          {filteredResources.length === 0 && !loading && searchTerm && resources.length > 0 && (
             <div className="text-center py-12 text-muted-foreground">
               No resources found matching "{searchTerm}"
             </div>
           )}
 
-          {/* Terminal Activity Feed */}
+          {/* About x402 */}
           <div className="mt-12">
-            <h2 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
-              <Zap className="h-5 w-5 text-primary" />
-              Network Activity
-            </h2>
-            <Card className="bg-card border-border/50 overflow-hidden">
-              <div className="bg-muted/30 px-4 py-2 border-b border-border/50 flex items-center gap-2">
-                <div className="flex gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-destructive/50" />
-                  <div className="w-3 h-3 rounded-full bg-accent/50" />
-                  <div className="w-3 h-3 rounded-full bg-primary/50" />
-                </div>
-                <span className="text-xs font-mono text-muted-foreground">x402-network-feed</span>
-              </div>
-              <div className="p-4 font-mono text-xs space-y-2 max-h-48 overflow-y-auto bg-background/50">
-                <div className="text-muted-foreground">
-                  <span className="text-primary">[{new Date().toLocaleTimeString()}]</span> New endpoint discovered: api.openai.com/v1/chat
-                </div>
-                <div className="text-muted-foreground">
-                  <span className="text-primary">[{new Date(Date.now() - 30000).toLocaleTimeString()}]</span> Payment validated: $0.002 USDC via Base
-                </div>
-                <div className="text-muted-foreground">
-                  <span className="text-primary">[{new Date(Date.now() - 60000).toLocaleTimeString()}]</span> Trust score updated: weather.api → 96%
-                </div>
-                <div className="text-muted-foreground">
-                  <span className="text-primary">[{new Date(Date.now() - 120000).toLocaleTimeString()}]</span> New server validated: translate.dev
-                </div>
-                <div className="text-muted-foreground animate-pulse">
-                  <span className="text-accent">cooking...</span>
-                </div>
-              </div>
+            <Card className="bg-card/50 border-border/50 p-6">
+              <h2 className="font-display text-xl font-bold mb-3 flex items-center gap-2">
+                <Shield className="h-5 w-5 text-primary" />
+                About x402 Bazaar
+              </h2>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                The x402 Bazaar is a decentralized discovery layer for HTTP 402 payment-enabled APIs. 
+                It allows AI agents and applications to discover, verify, and pay for API services using cryptocurrency. 
+                This page shows live data from the Coinbase CDP discovery endpoint.
+              </p>
             </Card>
           </div>
         </div>
