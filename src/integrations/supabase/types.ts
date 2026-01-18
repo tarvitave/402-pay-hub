@@ -22,10 +22,12 @@ export type Database = {
           clicked_at: string | null
           created_at: string
           delivered_at: string | null
+          error_message: string | null
           event_type: string
           id: string
           link_clicked: string | null
           message_id: string | null
+          metadata: Json | null
           opened_at: string | null
           raw_payload: Json | null
           recipient: string
@@ -38,10 +40,12 @@ export type Database = {
           clicked_at?: string | null
           created_at?: string
           delivered_at?: string | null
+          error_message?: string | null
           event_type: string
           id?: string
           link_clicked?: string | null
           message_id?: string | null
+          metadata?: Json | null
           opened_at?: string | null
           raw_payload?: Json | null
           recipient: string
@@ -54,16 +58,56 @@ export type Database = {
           clicked_at?: string | null
           created_at?: string
           delivered_at?: string | null
+          error_message?: string | null
           event_type?: string
           id?: string
           link_clicked?: string | null
           message_id?: string | null
+          metadata?: Json | null
           opened_at?: string | null
           raw_payload?: Json | null
           recipient?: string
           user_agent?: string | null
         }
         Relationships: []
+      }
+      email_invites: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          list_id: string | null
+          name: string | null
+          sent_at: string | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          list_id?: string | null
+          name?: string | null
+          sent_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          list_id?: string | null
+          name?: string | null
+          sent_at?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_invites_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "mailing_lists"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       invite_contacts: {
         Row: {
@@ -116,21 +160,126 @@ export type Database = {
         }
         Relationships: []
       }
+      mailing_lists: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      newsletters: {
+        Row: {
+          category: string | null
+          content: string
+          created_at: string | null
+          date: string
+          excerpt: string
+          hero_image: string | null
+          id: number
+          industry: string | null
+          month: string
+          read_time: string | null
+          scheduled_at: string | null
+          sent_at: string | null
+          slug: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          content: string
+          created_at?: string | null
+          date: string
+          excerpt: string
+          hero_image?: string | null
+          id?: number
+          industry?: string | null
+          month: string
+          read_time?: string | null
+          scheduled_at?: string | null
+          sent_at?: string | null
+          slug: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          created_at?: string | null
+          date?: string
+          excerpt?: string
+          hero_image?: string | null
+          id?: number
+          industry?: string | null
+          month?: string
+          read_time?: string | null
+          scheduled_at?: string | null
+          sent_at?: string | null
+          slug?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      page_views: {
+        Row: {
+          created_at: string | null
+          id: string
+          page_path: string
+          visitor_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          page_path: string
+          visitor_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          page_path?: string
+          visitor_id?: string
+        }
+        Relationships: []
+      }
       subscribers: {
         Row: {
+          confirmed: boolean | null
           email: string
           id: string
           subscribed_at: string
+          unsubscribed_at: string | null
         }
         Insert: {
+          confirmed?: boolean | null
           email: string
           id?: string
           subscribed_at?: string
+          unsubscribed_at?: string | null
         }
         Update: {
+          confirmed?: boolean | null
           email?: string
           id?: string
           subscribed_at?: string
+          unsubscribed_at?: string | null
         }
         Relationships: []
       }

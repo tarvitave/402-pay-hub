@@ -8,3 +8,15 @@ verify_jwt = false
 
 [functions.send-invite]
 verify_jwt = false
+
+[functions.send-invites]
+verify_jwt = false
+
+[functions.admin-stats]
+verify_jwt = false
+
+[functions.page-analytics]
+verify_jwt = false
+
+[functions.bazaar-discovery]
+verify_jwt = false
