@@ -27,8 +27,114 @@ interface Newsletter {
   created_at: string;
 }
 
-const CATEGORIES = ["GenAI Tools", "AI Models", "Industry News", "Tutorials", "Product Updates"];
+const CATEGORIES = ["GenAI Tools", "AI Models", "Industry News", "Tutorials", "Product Updates", "Weekly Digest"];
 const INDUSTRIES = ["General", "Finance", "Healthcare", "Technology", "Marketing", "E-commerce"];
+
+const SPONSORS = [
+  {
+    name: "OSVue.com",
+    url: "https://osvue.com",
+    description: "OSVue is your go-to platform for discovering and exploring open-source projects. Find the best tools, libraries, and frameworks curated for developers who value transparency and community-driven innovation."
+  },
+  {
+    name: "WheelOfPopups.com",
+    url: "https://wheelofpopups.com",
+    description: "WheelOfPopups transforms boring exit popups into engaging gamified experiences. Spin-to-win wheels, scratch cards, and slot machines that boost conversions by up to 30% while delighting your visitors."
+  },
+  {
+    name: "RaffleSelect.com",
+    url: "https://raffleselect.com",
+    description: "RaffleSelect makes running giveaways and contests effortless. From social media raffles to email list growth campaigns, our platform handles entries, winner selection, and compliance—so you can focus on engagement."
+  },
+  {
+    name: "Phlorin.com",
+    url: "https://phlorin.com",
+    description: "Phlorin is the next-generation payment orchestration layer for web3 commerce. Seamlessly accept crypto payments, manage multi-chain transactions, and integrate with existing payment infrastructure."
+  },
+  {
+    name: "NoCodeAPI.com",
+    url: "https://nocodeapi.com",
+    description: "NoCodeAPI connects your favorite apps without writing code. Build powerful automations with 200+ integrations including Google Sheets, Airtable, Notion, and more. Perfect for makers who ship fast."
+  }
+];
+
+const getWeeklyTemplate = (weekNumber: number) => {
+  const sponsor = SPONSORS[weekNumber % SPONSORS.length];
+  
+  return `# x402 Protocol Weekly Digest
+
+*Your weekly roundup of HTTP 402 protocol developments, integrations, and the future of machine-to-machine payments.*
+
+---
+
+## 🔴 Status 402
+**For Developers: Breaking spec changes & SDK updates**
+
+[Write about the latest HTTP 402 specification changes, breaking changes in SDKs, and important updates developers need to know about this week.]
+
+---
+
+## 🏦 The Clearing House
+**For Fintech/DeFi: Facilitator news from Base, Solana, Avalanche**
+
+[Cover news from payment facilitators across different chains. Include updates from Base, Solana, Avalanche, and other networks supporting x402 payments.]
+
+---
+
+## 🛒 Agent Shopping
+**For ListBuilders: New APIs and services accepting x402**
+
+[Highlight new APIs, services, and platforms that have started accepting x402 payments. Great for builders looking to integrate new capabilities into their AI agents.]
+
+---
+
+## 🛡️ Reputation & Safety
+**For Founders: ERC-8004, agent identity, and security**
+
+[Discuss developments in agent identity standards like ERC-8004, security best practices, reputation systems, and trust frameworks for autonomous agents.]
+
+---
+
+## ⚡ The 1-Line Integration
+**For Vibe Coders: Fast, vibe-first implementation tutorials**
+
+\`\`\`javascript
+// This week's quick win:
+// [Add a simple, copy-paste code snippet here]
+\`\`\`
+
+[Brief explanation of what this code does and how to use it in your project.]
+
+---
+
+## 📰 Also Worth Reading
+
+Check out the **[AllDayAL Newsletter](https://alldayal.com)** for daily AI insights, tool reviews, and productivity tips for busy professionals. Subscribe to stay ahead of the curve!
+
+---
+
+## 💎 This Week's Sponsor: ${sponsor.name}
+
+[![${sponsor.name}](${sponsor.url})](${sponsor.url})
+
+${sponsor.description}
+
+**[Check out ${sponsor.name} →](${sponsor.url})**
+
+---
+
+*Thanks for reading the x402 Protocol Weekly Digest. Forward this to a friend who's building the future of autonomous commerce!*
+
+[Subscribe](https://x402info.com/#newsletter) | [Unsubscribe](#unsubscribe)
+`;
+};
+
+const getNextWeekNumber = () => {
+  const startOfYear = new Date(new Date().getFullYear(), 0, 1);
+  const today = new Date();
+  const daysSinceStart = Math.floor((today.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
+  return Math.ceil(daysSinceStart / 7);
+};
 
 export default function NewsletterEditor() {
   const [newsletters, setNewsletters] = useState<Newsletter[]>([]);
@@ -88,6 +194,25 @@ export default function NewsletterEditor() {
       industry: "General",
       excerpt: "",
       content: "",
+      hero_image: "",
+    });
+  };
+
+  const handleUseWeeklyTemplate = () => {
+    const weekNumber = getNextWeekNumber();
+    const today = new Date();
+    const dateStr = today.toISOString().split("T")[0];
+    
+    setIsCreating(true);
+    setEditingId(null);
+    setForm({
+      title: `x402 Protocol Weekly Digest - Week ${weekNumber}`,
+      date: dateStr,
+      read_time: "10 min read",
+      category: "Weekly Digest",
+      industry: "Technology",
+      excerpt: `Your weekly roundup of HTTP 402 protocol developments, integrations, and the future of machine-to-machine payments. Week ${weekNumber} edition.`,
+      content: getWeeklyTemplate(weekNumber),
       hero_image: "",
     });
   };
@@ -316,10 +441,16 @@ export default function NewsletterEditor() {
           <h3 className="text-lg font-semibold">Newsletters</h3>
           <p className="text-sm text-muted-foreground">{newsletters.length} newsletters</p>
         </div>
-        <Button onClick={handleCreate}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Newsletter
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleUseWeeklyTemplate}>
+            <Calendar className="h-4 w-4 mr-2" />
+            Weekly Template
+          </Button>
+          <Button onClick={handleCreate}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Newsletter
+          </Button>
+        </div>
       </div>
 
       {newsletters.length === 0 ? (
