@@ -14,6 +14,7 @@ interface MailingList {
   name: string;
   description: string | null;
   created_at: string;
+  paused: boolean;
   stats: {
     pending: number;
     sent: number;
@@ -48,6 +49,7 @@ export default function MailingListsManager() {
   const [isLoading, setIsLoading] = useState(true);
   const [uploadingListId, setUploadingListId] = useState<string | null>(null);
   const [sendingListId, setSendingListId] = useState<string | null>(null);
+  const [togglingPauseListId, setTogglingPauseListId] = useState<string | null>(null);
   const [settings, setSettings] = useState<InviteSettings>({
     emails_per_hour: 50,
     email_subject: "Join our Newsletter!",
@@ -219,6 +221,31 @@ export default function MailingListsManager() {
       toast.error("Failed to send invites");
     } finally {
       setSendingListId(null);
+    }
+  };
+
+  const handleToggleListPause = async (listId: string, currentlyPaused: boolean) => {
+    setTogglingPauseListId(listId);
+    try {
+      const action = currentlyPaused ? "resume-list" : "pause-list";
+      const response = await supabase.functions.invoke("send-invites", {
+        body: { action, listId },
+      });
+
+      if (response.error) throw response.error;
+      
+      // Update local state
+      setLists((prev) =>
+        prev.map((list) =>
+          list.id === listId ? { ...list, paused: !currentlyPaused } : list
+        )
+      );
+      toast.success(currentlyPaused ? "List resumed" : "List paused");
+    } catch (error) {
+      console.error("Error toggling list pause:", error);
+      toast.error("Failed to update list status");
+    } finally {
+      setTogglingPauseListId(null);
     }
   };
 
@@ -429,6 +456,7 @@ export default function MailingListsManager() {
                     {list.description && <CardDescription>{list.description}</CardDescription>}
                   </div>
                   <div className="flex items-center gap-2">
+                    {list.paused && <Badge variant="outline" className="text-amber-600 border-amber-600">Paused</Badge>}
                     <Badge variant="secondary">{list.stats.pending} pending</Badge>
                     <Badge variant="default">{list.stats.sent} sent</Badge>
                     {list.stats.failed > 0 && <Badge variant="destructive">{list.stats.failed} failed</Badge>}
@@ -461,7 +489,7 @@ export default function MailingListsManager() {
                     variant="outline"
                     size="sm"
                     onClick={() => handleSendBatch(list.id)}
-                    disabled={sendingListId === list.id || list.stats.pending === 0}
+                    disabled={sendingListId === list.id || list.stats.pending === 0 || list.paused}
                   >
                     {sendingListId === list.id ? (
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -469,6 +497,21 @@ export default function MailingListsManager() {
                       <Send className="h-4 w-4 mr-2" />
                     )}
                     Send Batch
+                  </Button>
+                  <Button
+                    variant={list.paused ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleToggleListPause(list.id, list.paused)}
+                    disabled={togglingPauseListId === list.id}
+                  >
+                    {togglingPauseListId === list.id ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : list.paused ? (
+                      <Play className="h-4 w-4 mr-2" />
+                    ) : (
+                      <Pause className="h-4 w-4 mr-2" />
+                    )}
+                    {list.paused ? "Resume" : "Pause"}
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => toggleExpand(list.id)}>
                     {expandedListId === list.id ? (

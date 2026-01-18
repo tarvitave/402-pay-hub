@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 interface InviteRequest {
-  action: "get-lists" | "create-list" | "delete-list" | "list-invites" | "upload" | "send" | "pause" | "resume" | "remove" | "status" | "get-settings" | "update-settings";
+  action: "get-lists" | "create-list" | "delete-list" | "list-invites" | "upload" | "send" | "pause" | "resume" | "pause-list" | "resume-list" | "remove" | "status" | "get-settings" | "update-settings";
   listId?: string;
   name?: string;
   description?: string;
@@ -504,7 +504,65 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Pause sending
+    // Pause sending for a specific list
+    if (action === "pause-list") {
+      const { listId } = body;
+      if (!listId) {
+        return new Response(
+          JSON.stringify({ error: "List ID is required" }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      const { error } = await supabase
+        .from("mailing_lists")
+        .update({ paused: true, updated_at: new Date().toISOString() })
+        .eq("id", listId);
+
+      if (error) {
+        console.error("Error pausing list:", error);
+        return new Response(
+          JSON.stringify({ error: "Failed to pause list" }),
+          { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, paused: true }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Resume sending for a specific list
+    if (action === "resume-list") {
+      const { listId } = body;
+      if (!listId) {
+        return new Response(
+          JSON.stringify({ error: "List ID is required" }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      const { error } = await supabase
+        .from("mailing_lists")
+        .update({ paused: false, updated_at: new Date().toISOString() })
+        .eq("id", listId);
+
+      if (error) {
+        console.error("Error resuming list:", error);
+        return new Response(
+          JSON.stringify({ error: "Failed to resume list" }),
+          { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, paused: false }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Global pause sending (legacy - kept for compatibility)
     if (action === "pause") {
       const { data: existing } = await supabase
         .from("invite_settings")
@@ -529,7 +587,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Resume sending
+    // Global resume sending (legacy - kept for compatibility)
     if (action === "resume") {
       const { data: existing } = await supabase
         .from("invite_settings")
