@@ -74,7 +74,7 @@ const getWeeklyTemplate = (weekNumber: number) => {
 
 ---
 
-## 🏦 The Clearing House
+## 🏦 Clearing & Settlement
 **For Fintech/DeFi: Facilitator news from Base, Solana, Avalanche**
 
 [Cover news from payment facilitators across different chains. Include updates from Base, Solana, Avalanche, and other networks supporting x402 payments.]
