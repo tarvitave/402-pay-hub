@@ -14,6 +14,40 @@ interface InviteRequest {
   emailTemplate?: string;
 }
 
+// Limit emails per invocation to avoid WORKER_LIMIT timeout (cron runs every 6 min → ~50/hour)
+const EMAILS_PER_INVOCATION = 5;
+const BATCH_SIZE = 500;
+const PAGE_SIZE = 1000;
+
+// Helper to fetch all emails from a table with pagination
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function fetchAllEmails(supabase: any, table: string): Promise<Set<string>> {
+  const emails = new Set<string>();
+  let offset = 0;
+
+  while (true) {
+    const { data: batch, error } = await supabase
+      .from(table)
+      .select("email")
+      .range(offset, offset + PAGE_SIZE - 1);
+
+    if (error) {
+      console.error(`Error fetching ${table} at offset ${offset}:`, error);
+      break;
+    }
+
+    if (!batch || batch.length === 0) break;
+
+    batch.forEach((r: { email: string }) => emails.add(r.email.toLowerCase()));
+    console.log(`Fetched ${batch.length} from ${table}, total so far: ${emails.size}`);
+
+    if (batch.length < PAGE_SIZE) break;
+    offset += PAGE_SIZE;
+  }
+
+  return emails;
+}
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -101,7 +135,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Upload contacts from CSV
+    // Upload contacts from CSV - with batch processing and global duplicate checking
     if (action === "upload") {
       if (!contacts || contacts.length === 0) {
         return new Response(
@@ -110,58 +144,82 @@ const handler = async (req: Request): Promise<Response> => {
         );
       }
 
-      let added = 0;
-      let skipped = 0;
+      console.log(`Starting upload of ${contacts.length} contacts`);
+
+      // Fetch ALL existing emails globally (handles 45k+ records)
+      console.log("Fetching existing subscribers...");
+      const existingSubscribers = await fetchAllEmails(supabase, "subscribers");
+      console.log(`Found ${existingSubscribers.size} existing subscribers`);
+
+      console.log("Fetching existing invite contacts...");
+      const existingInvites = await fetchAllEmails(supabase, "invite_contacts");
+      console.log(`Found ${existingInvites.size} existing invite contacts`);
+
+      // Filter out duplicates and invalid emails
+      const validContacts: Array<{ email: string; name: string | null; status: string }> = [];
+      let skippedInvalid = 0;
+      let skippedDuplicate = 0;
 
       for (const contact of contacts) {
-        const email = contact.email.toLowerCase().trim();
+        const email = contact.email?.toLowerCase().trim();
         if (!email || !email.includes("@")) {
-          skipped++;
+          skippedInvalid++;
           continue;
         }
 
-        // Check if already exists in invite_contacts
-        const { data: existingContact } = await supabase
-          .from("invite_contacts")
-          .select("id")
-          .eq("email", email)
-          .maybeSingle();
-
-        // Check if already a subscriber
-        const { data: existingSubscriber } = await supabase
-          .from("subscribers")
-          .select("id")
-          .eq("email", email)
-          .maybeSingle();
-
-        if (existingContact || existingSubscriber) {
-          skipped++;
+        if (existingSubscribers.has(email) || existingInvites.has(email)) {
+          skippedDuplicate++;
           continue;
         }
 
-        const { error: insertError } = await supabase
+        validContacts.push({
+          email,
+          name: contact.name?.trim() || null,
+          status: "pending"
+        });
+      }
+
+      console.log(`Filtered: ${validContacts.length} valid, ${skippedInvalid} invalid, ${skippedDuplicate} duplicates`);
+
+      // Batch insert with upsert as safety net
+      let totalInserted = 0;
+      const totalBatches = Math.ceil(validContacts.length / BATCH_SIZE);
+
+      for (let i = 0; i < validContacts.length; i += BATCH_SIZE) {
+        const batch = validContacts.slice(i, i + BATCH_SIZE);
+        const batchNum = Math.floor(i / BATCH_SIZE) + 1;
+
+        const { data: insertedData, error: insertError } = await supabase
           .from("invite_contacts")
-          .insert({
-            email,
-            name: contact.name?.trim() || null,
-            status: "pending"
-          });
+          .upsert(batch, { onConflict: "email", ignoreDuplicates: true })
+          .select();
 
         if (insertError) {
-          console.error("Error inserting contact:", insertError);
-          skipped++;
+          console.error(`Batch ${batchNum}/${totalBatches} error:`, insertError);
         } else {
-          added++;
+          const insertedCount = insertedData?.length || 0;
+          totalInserted += insertedCount;
+          console.log(`Batch ${batchNum}/${totalBatches}: inserted ${insertedCount}, total ${totalInserted}/${validContacts.length}`);
         }
       }
 
       return new Response(
-        JSON.stringify({ success: true, added, skipped }),
+        JSON.stringify({ 
+          success: true, 
+          added: totalInserted, 
+          skipped: skippedInvalid + skippedDuplicate,
+          details: {
+            invalid: skippedInvalid,
+            duplicate: skippedDuplicate,
+            existingSubscribers: existingSubscribers.size,
+            existingInvites: existingInvites.size
+          }
+        }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    // Send invites
+    // Send invites - limited to EMAILS_PER_INVOCATION to avoid timeout
     if (action === "send") {
       const postmarkApiKey = Deno.env.get("POSTMARK_API_KEY");
       if (!postmarkApiKey) {
@@ -185,12 +243,12 @@ const handler = async (req: Request): Promise<Response> => {
         );
       }
 
-      // Get pending contacts (limit to emails_per_hour)
+      // Get pending contacts - limit to EMAILS_PER_INVOCATION to avoid WORKER_LIMIT timeout
       const { data: pendingContacts, error: contactsError } = await supabase
         .from("invite_contacts")
         .select("*")
         .eq("status", "pending")
-        .limit(settings.emails_per_hour);
+        .limit(EMAILS_PER_INVOCATION);
 
       if (contactsError) {
         console.error("Error fetching pending contacts:", contactsError);
@@ -207,10 +265,13 @@ const handler = async (req: Request): Promise<Response> => {
         );
       }
 
+      console.log(`Sending to ${pendingContacts.length} contacts (limit: ${EMAILS_PER_INVOCATION})`);
+
       const subscribeUrl = "https://x402info.com/#newsletter";
       let sent = 0;
       let failed = 0;
 
+      // Send emails without artificial delays
       for (const contact of pendingContacts) {
         const personalizedTemplate = settings.email_template
           .replace(/\{\{name\}\}/g, contact.name || "there")
@@ -252,6 +313,7 @@ const handler = async (req: Request): Promise<Response> => {
               .update({ status: "sent", invited_at: new Date().toISOString() })
               .eq("id", contact.id);
             sent++;
+            console.log(`Sent to ${contact.email} (${sent}/${pendingContacts.length})`);
           } else {
             const errorResult = await response.json();
             console.error("Postmark error for", contact.email, errorResult);
@@ -266,6 +328,8 @@ const handler = async (req: Request): Promise<Response> => {
           failed++;
         }
       }
+
+      console.log(`Completed: sent ${sent}, failed ${failed}`);
 
       return new Response(
         JSON.stringify({ success: true, sent, failed }),
