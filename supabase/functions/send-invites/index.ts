@@ -307,6 +307,30 @@ const handler = async (req: Request): Promise<Response> => {
         );
       }
 
+      // If a listId is provided, check if the list is paused
+      if (listId) {
+        const { data: list, error: listError } = await supabase
+          .from("mailing_lists")
+          .select("paused")
+          .eq("id", listId)
+          .single();
+
+        if (listError) {
+          console.error("Error fetching list:", listError);
+          return new Response(
+            JSON.stringify({ error: "Failed to fetch list" }),
+            { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+          );
+        }
+
+        if (list?.paused) {
+          return new Response(
+            JSON.stringify({ success: false, sent: 0, message: "This mailing list is paused" }),
+            { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+          );
+        }
+      }
+
       // Get settings from invite_settings table
       const { data: settings } = await supabase
         .from("invite_settings")
@@ -318,10 +342,12 @@ const handler = async (req: Request): Promise<Response> => {
       const emailTemplate = settings?.email_template || "Hi {{name}},\n\nYou've been invited to subscribe to our newsletter.\n\nClick here to subscribe: {{subscribe_url}}";
 
       // Get pending contacts - limit to EMAILS_PER_INVOCATION
+      // IMPORTANT: Only query contacts from the specified list, and ensure we exclude paused lists
       let query = supabase
         .from("email_invites")
-        .select("*")
+        .select("*, mailing_lists!inner(paused)")
         .eq("status", "pending")
+        .eq("mailing_lists.paused", false)
         .limit(EMAILS_PER_INVOCATION);
 
       if (listId) {
