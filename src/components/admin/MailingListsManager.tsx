@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Trash2, Upload, Send, ChevronDown, ChevronUp, FileText, Loader2 } from "lucide-react";
+import { Plus, Trash2, Upload, Send, ChevronDown, ChevronUp, FileText, Loader2, Pause, Play } from "lucide-react";
 import { toast } from "sonner";
 
 interface MailingList {
@@ -35,6 +35,7 @@ interface InviteSettings {
   emails_per_hour: number;
   email_subject: string;
   email_template: string;
+  paused: boolean;
 }
 
 export default function MailingListsManager() {
@@ -51,8 +52,10 @@ export default function MailingListsManager() {
     emails_per_hour: 50,
     email_subject: "Join our Newsletter!",
     email_template: "Hi {{name}},\n\nYou've been invited to subscribe.\n\nClick here: {{subscribe_url}}",
+    paused: false,
   });
   const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [isTogglingPause, setIsTogglingPause] = useState(false);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const fetchLists = async () => {
@@ -82,6 +85,7 @@ export default function MailingListsManager() {
           emails_per_hour: response.data.emails_per_hour || 50,
           email_subject: response.data.email_subject || "Join our Newsletter!",
           email_template: response.data.email_template || "Hi {{name}},\n\nClick here: {{subscribe_url}}",
+          paused: response.data.paused ?? false,
         });
       }
     } catch (error) {
@@ -256,6 +260,25 @@ export default function MailingListsManager() {
     }
   };
 
+  const handleTogglePause = async () => {
+    setIsTogglingPause(true);
+    try {
+      const action = settings.paused ? "resume" : "pause";
+      const response = await supabase.functions.invoke("send-invites", {
+        body: { action },
+      });
+
+      if (response.error) throw response.error;
+      setSettings((prev) => ({ ...prev, paused: !prev.paused }));
+      toast.success(settings.paused ? "Email sending resumed" : "Email sending paused");
+    } catch (error) {
+      console.error("Error toggling pause:", error);
+      toast.error("Failed to update pause status");
+    } finally {
+      setIsTogglingPause(false);
+    }
+  };
+
   const toggleExpand = (listId: string) => {
     if (expandedListId === listId) {
       setExpandedListId(null);
@@ -326,9 +349,30 @@ export default function MailingListsManager() {
               Use {"{{name}}"} for recipient name and {"{{subscribe_url}}"} for the subscription link.
             </p>
           </div>
-          <Button onClick={handleSaveSettings} disabled={isSavingSettings}>
-            {isSavingSettings ? "Saving..." : "Save Settings"}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={handleSaveSettings} disabled={isSavingSettings}>
+              {isSavingSettings ? "Saving..." : "Save Settings"}
+            </Button>
+            <Button 
+              onClick={handleTogglePause} 
+              disabled={isTogglingPause}
+              variant={settings.paused ? "default" : "outline"}
+            >
+              {isTogglingPause ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : settings.paused ? (
+                <Play className="h-4 w-4 mr-2" />
+              ) : (
+                <Pause className="h-4 w-4 mr-2" />
+              )}
+              {settings.paused ? "Resume Sending" : "Pause Sending"}
+            </Button>
+            {settings.paused && (
+              <Badge variant="secondary" className="ml-2">
+                Sending Paused
+              </Badge>
+            )}
+          </div>
         </CardContent>
       </Card>
 
