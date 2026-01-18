@@ -8,7 +8,8 @@ const Navbar = () => {
 
   const navLinks = [
     { href: "/", label: "Home" },
-    { href: "/marketplace", label: "Marketplace", isNew: true },
+    { href: "/newsletters", label: "Newsletters", isNew: true },
+    { href: "/marketplace", label: "Marketplace" },
     { href: "/about", label: "About x402" },
     { href: "/blog", label: "Blog" },
     { href: "/resources", label: "Resources" },
