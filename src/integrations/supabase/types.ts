@@ -142,6 +142,7 @@ export type Database = {
           email_template: string
           emails_per_hour: number
           id: string
+          paused: boolean
           updated_at: string
         }
         Insert: {
@@ -149,6 +150,7 @@ export type Database = {
           email_template?: string
           emails_per_hour?: number
           id?: string
+          paused?: boolean
           updated_at?: string
         }
         Update: {
@@ -156,6 +158,7 @@ export type Database = {
           email_template?: string
           emails_per_hour?: number
           id?: string
+          paused?: boolean
           updated_at?: string
         }
         Relationships: []

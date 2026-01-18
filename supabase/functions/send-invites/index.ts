@@ -498,7 +498,58 @@ const handler = async (req: Request): Promise<Response> => {
           emails_per_hour: 50,
           email_subject: "Join the x402 Protocol Newsletter!",
           email_template: "Hi {{name}},\n\nYou have been invited to join our newsletter.\n\nClick here to subscribe: {{subscribe_url}}\n\nBest regards,\nThe Team",
+          paused: false,
         }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Pause sending
+    if (action === "pause") {
+      const { data: existing } = await supabase
+        .from("invite_settings")
+        .select("id")
+        .limit(1)
+        .maybeSingle();
+
+      if (existing) {
+        await supabase
+          .from("invite_settings")
+          .update({ paused: true, updated_at: new Date().toISOString() })
+          .eq("id", existing.id);
+      } else {
+        await supabase
+          .from("invite_settings")
+          .insert({ paused: true });
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, paused: true }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Resume sending
+    if (action === "resume") {
+      const { data: existing } = await supabase
+        .from("invite_settings")
+        .select("id")
+        .limit(1)
+        .maybeSingle();
+
+      if (existing) {
+        await supabase
+          .from("invite_settings")
+          .update({ paused: false, updated_at: new Date().toISOString() })
+          .eq("id", existing.id);
+      } else {
+        await supabase
+          .from("invite_settings")
+          .insert({ paused: false });
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, paused: false }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
