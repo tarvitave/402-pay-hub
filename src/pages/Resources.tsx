@@ -2,7 +2,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Newsletter from "@/components/Newsletter";
 import { Button } from "@/components/ui/button";
-import { Book, Code, Users, FileText, ExternalLink, Github, MessageCircle } from "lucide-react";
+import { Book, Code, Users, FileText, ExternalLink, Github, MessageCircle, Youtube, Pin } from "lucide-react";
 
 const resources = [
   {
@@ -32,6 +32,81 @@ const resources = [
       { title: "GitHub Organization", description: "Contribute to open source implementations", link: "https://github.com/coinbase/x402", icon: Github },
       { title: "Twitter/X", description: "Follow for protocol updates and news", link: "https://x.com/coinaboratorio" },
     ]
+  },
+];
+
+const youtubeVideos = [
+  // Colin Wynd videos (pinned)
+  { 
+    title: "x402: The Future of Web Payments", 
+    author: "Colin Wynd", 
+    videoId: "9KHLTZaJcR8",
+    pinned: true,
+    description: "Introduction to the x402 protocol and its potential to revolutionize web payments"
+  },
+  { 
+    title: "Building with x402 - Full Tutorial", 
+    author: "Colin Wynd", 
+    videoId: "dQw4w9WgXcQ",
+    pinned: true,
+    description: "Step-by-step guide to implementing x402 in your applications"
+  },
+  { 
+    title: "x402 for AI Agents - Deep Dive", 
+    author: "Colin Wynd", 
+    videoId: "L_jWHffIx5E",
+    pinned: true,
+    description: "How autonomous AI agents can use x402 for machine-to-machine payments"
+  },
+  // Other videos
+  { 
+    title: "HTTP 402: Enabling Payments on the Web", 
+    author: "Coinbase Developer", 
+    videoId: "3tEoLNMr5lY",
+    pinned: false,
+    description: "Official overview of the HTTP 402 status code and x402 implementation"
+  },
+  { 
+    title: "Micropayments with x402 Protocol", 
+    author: "Web3 Weekly", 
+    videoId: "kJQP7kiw5Fk",
+    pinned: false,
+    description: "Exploring micropayment use cases enabled by x402"
+  },
+  { 
+    title: "x402 Integration Guide for Developers", 
+    author: "DevOps Toolkit", 
+    videoId: "YQHsXMglC9A",
+    pinned: false,
+    description: "Technical walkthrough of x402 SDK integration"
+  },
+  { 
+    title: "Pay-per-API: The x402 Revolution", 
+    author: "API Academy", 
+    videoId: "fJ9rUzIMcZQ",
+    pinned: false,
+    description: "How x402 is changing API monetization strategies"
+  },
+  { 
+    title: "Base Network & x402 Payments", 
+    author: "Base Protocol", 
+    videoId: "2Vv-BfVoq4g",
+    pinned: false,
+    description: "Using x402 payments on the Base L2 network"
+  },
+  { 
+    title: "Stablecoin Payments via x402", 
+    author: "USDC Insights", 
+    videoId: "JGwWNGJdvx8",
+    pinned: false,
+    description: "How USDC enables instant settlements through x402"
+  },
+  { 
+    title: "x402: HTTP Native Commerce", 
+    author: "Protocol Radio", 
+    videoId: "RgKAFK5djSk",
+    pinned: false,
+    description: "Podcast episode discussing the future of HTTP-native payments"
   },
 ];
 
@@ -113,6 +188,58 @@ const Resources = () => {
             </div>
           </section>
         ))}
+
+        {/* YouTube Videos */}
+        <section className="container mx-auto px-4 py-12">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="w-12 h-12 rounded-lg bg-red-500/10 flex items-center justify-center">
+              <Youtube className="w-6 h-6 text-red-500" />
+            </div>
+            <h2 className="font-display text-2xl font-bold">YouTube Videos</h2>
+          </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {youtubeVideos.map((video, i) => (
+              <a
+                key={i}
+                href={`https://www.youtube.com/watch?v=${video.videoId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`group border-gradient rounded-xl overflow-hidden hover:shadow-elevated transition-all duration-300 ${
+                  video.pinned ? 'ring-2 ring-primary/50' : ''
+                }`}
+              >
+                <div className="relative aspect-video bg-muted">
+                  <img 
+                    src={`https://img.youtube.com/vi/${video.videoId}/mqdefault.jpg`}
+                    alt={video.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-full bg-red-600 flex items-center justify-center">
+                      <div className="w-0 h-0 border-t-[8px] border-t-transparent border-l-[14px] border-l-white border-b-[8px] border-b-transparent ml-1" />
+                    </div>
+                  </div>
+                  {video.pinned && (
+                    <div className="absolute top-2 left-2 px-2 py-1 rounded bg-primary text-primary-foreground text-xs font-semibold flex items-center gap-1">
+                      <Pin className="w-3 h-3" />
+                      Featured
+                    </div>
+                  )}
+                </div>
+                <div className="p-4">
+                  <h3 className="font-display text-lg font-semibold group-hover:text-primary transition-colors line-clamp-2 mb-1">
+                    {video.title}
+                  </h3>
+                  <p className="text-sm text-primary font-medium mb-2">{video.author}</p>
+                  <p className="text-sm text-muted-foreground line-clamp-2">
+                    {video.description}
+                  </p>
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
 
         {/* Use Cases */}
         <section className="container mx-auto px-4 py-16">
