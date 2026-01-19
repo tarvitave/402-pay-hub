@@ -11,6 +11,15 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import MailingListsManager from "@/components/admin/MailingListsManager";
 import NewsletterEditor from "@/components/admin/NewsletterEditor";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 
 interface EmailEvent {
   id: string;
@@ -42,8 +51,12 @@ interface TopPage {
   views: number;
 }
 
+const EVENTS_PER_PAGE = 100;
+
 const Admin = () => {
   const [events, setEvents] = useState<EmailEvent[]>([]);
+  const [eventsPage, setEventsPage] = useState(1);
+  const [totalEvents, setTotalEvents] = useState(0);
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData[]>([]);
   const [topPages, setTopPages] = useState<TopPage[]>([]);
@@ -71,12 +84,18 @@ const Admin = () => {
         .order("subscribed_at", { ascending: false });
       setSubscribers(subscribersData || []);
 
-      // Fetch email events
+      // Fetch email events count
+      const { count: eventsCount } = await supabase
+        .from("email_events")
+        .select("*", { count: "exact", head: true });
+      setTotalEvents(eventsCount || 0);
+
+      // Fetch email events with pagination
       const { data: eventsData } = await supabase
         .from("email_events")
         .select("*")
         .order("created_at", { ascending: false })
-        .limit(50);
+        .range((eventsPage - 1) * EVENTS_PER_PAGE, eventsPage * EVENTS_PER_PAGE - 1);
       setEvents(eventsData || []);
 
       // Fetch stats from edge function
@@ -114,7 +133,31 @@ const Admin = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [eventsPage]);
+
+  const totalEventsPages = Math.ceil(totalEvents / EVENTS_PER_PAGE);
+
+  const handleEventsPageChange = (page: number) => {
+    if (page >= 1 && page <= totalEventsPages) {
+      setEventsPage(page);
+    }
+  };
+
+  const getVisiblePages = () => {
+    const pages: (number | "ellipsis")[] = [];
+    if (totalEventsPages <= 7) {
+      for (let i = 1; i <= totalEventsPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (eventsPage > 3) pages.push("ellipsis");
+      const start = Math.max(2, eventsPage - 1);
+      const end = Math.min(totalEventsPages - 1, eventsPage + 1);
+      for (let i = start; i <= end; i++) pages.push(i);
+      if (eventsPage < totalEventsPages - 2) pages.push("ellipsis");
+      pages.push(totalEventsPages);
+    }
+    return pages;
+  };
 
   const getEventBadgeVariant = (eventType: string) => {
     const type = eventType.toLowerCase();
@@ -320,32 +363,72 @@ const Admin = () => {
             </div>
             <Card>
               <CardHeader>
-                <CardTitle>Recent Email Events</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Email Events</CardTitle>
+                  <span className="text-sm text-muted-foreground">
+                    {totalEvents > 0 && `${((eventsPage - 1) * EVENTS_PER_PAGE) + 1}-${Math.min(eventsPage * EVENTS_PER_PAGE, totalEvents)} of ${totalEvents}`}
+                  </span>
+                </div>
               </CardHeader>
               <CardContent>
                 {events.length === 0 ? (
                   <p className="text-muted-foreground text-center py-8">No events yet</p>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="text-left py-3 px-2 text-sm font-medium text-muted-foreground">Event</th>
-                          <th className="text-left py-3 px-2 text-sm font-medium text-muted-foreground">Recipient</th>
-                          <th className="text-left py-3 px-2 text-sm font-medium text-muted-foreground">Time</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {events.map((event) => (
-                          <tr key={event.id} className="border-b last:border-0">
-                            <td className="py-3 px-2"><Badge variant={getEventBadgeVariant(event.event_type)}>{event.event_type}</Badge></td>
-                            <td className="py-3 px-2">{event.recipient}</td>
-                            <td className="py-3 px-2 text-muted-foreground">{formatDate(event.created_at)}</td>
+                  <>
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-left py-3 px-2 text-sm font-medium text-muted-foreground">Event</th>
+                            <th className="text-left py-3 px-2 text-sm font-medium text-muted-foreground">Recipient</th>
+                            <th className="text-left py-3 px-2 text-sm font-medium text-muted-foreground">Time</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </thead>
+                        <tbody>
+                          {events.map((event) => (
+                            <tr key={event.id} className="border-b last:border-0">
+                              <td className="py-3 px-2"><Badge variant={getEventBadgeVariant(event.event_type)}>{event.event_type}</Badge></td>
+                              <td className="py-3 px-2">{event.recipient}</td>
+                              <td className="py-3 px-2 text-muted-foreground">{formatDate(event.created_at)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {totalEventsPages > 1 && (
+                      <Pagination className="mt-4">
+                        <PaginationContent>
+                          <PaginationItem>
+                            <PaginationPrevious 
+                              onClick={() => handleEventsPageChange(eventsPage - 1)}
+                              className={eventsPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                            />
+                          </PaginationItem>
+                          {getVisiblePages().map((page, idx) => (
+                            <PaginationItem key={idx}>
+                              {page === "ellipsis" ? (
+                                <PaginationEllipsis />
+                              ) : (
+                                <PaginationLink
+                                  onClick={() => handleEventsPageChange(page)}
+                                  isActive={eventsPage === page}
+                                  className="cursor-pointer"
+                                >
+                                  {page}
+                                </PaginationLink>
+                              )}
+                            </PaginationItem>
+                          ))}
+                          <PaginationItem>
+                            <PaginationNext 
+                              onClick={() => handleEventsPageChange(eventsPage + 1)}
+                              className={eventsPage === totalEventsPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                            />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
+                    )}
+                  </>
                 )}
               </CardContent>
             </Card>
