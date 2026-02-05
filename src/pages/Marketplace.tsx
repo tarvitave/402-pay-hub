@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
@@ -85,6 +86,12 @@ const Marketplace = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>x402 API Marketplace | Discover Pay-Per-Use HTTP 402 Enabled Services</title>
+        <meta name="description" content="Browse the x402 Bazaar marketplace for cryptocurrency-payable APIs. Find AI inference endpoints, data APIs, and machine-to-machine services accepting instant micropayments." />
+        <meta name="keywords" content="x402 marketplace, pay per use API directory, HTTP 402 API list, cryptocurrency API payments, AI API marketplace, micropayment enabled services, bazaar discovery" />
+        <link rel="canonical" href="https://x402info.lovable.app/marketplace" />
+      </Helmet>
       <Navbar />
       
       <main className="pt-24 pb-16">

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Newsletter from "@/components/Newsletter";
@@ -83,6 +84,12 @@ const Blog = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>x402 Blog | Micropayment Tutorials, API Monetization & HTTP 402 Guides</title>
+        <meta name="description" content="Technical tutorials on implementing HTTP 402 micropayments, pay-per-API guides, AI agent payment integration, and web monetization strategies without advertising." />
+        <meta name="keywords" content="micropayment tutorial, HTTP 402 implementation guide, pay per API tutorial, AI agent payments, web monetization blog, stablecoin integration, Lightning Network API" />
+        <link rel="canonical" href="https://x402info.lovable.app/blog" />
+      </Helmet>
       <Navbar />
       
       <main className="pt-24 pb-16">

@@ -1,4 +1,5 @@
 import Navbar from "@/components/Navbar";
+import { Helmet } from "react-helmet-async";
 import Footer from "@/components/Footer";
 import Newsletter from "@/components/Newsletter";
 import { Zap, History, Target, Users } from "lucide-react";
@@ -6,6 +7,12 @@ import { Zap, History, Target, Users } from "lucide-react";
 const About = () => {
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>About x402 Protocol | History of HTTP 402 Payment Required Status Code</title>
+        <meta name="description" content="Discover the origin of HTTP 402 Payment Required and how x402 protocol enables native web micropayments. Learn about Lightning Network integration, stablecoin payments, and the mission to fix web monetization." />
+        <meta name="keywords" content="HTTP 402 history, x402 protocol explained, web payment protocol, RFC 2616 payment required, micropayment standard, internet payment layer, web monetization alternative" />
+        <link rel="canonical" href="https://x402info.lovable.app/about" />
+      </Helmet>
       <Navbar />
       
       <main className="pt-24 pb-16">
