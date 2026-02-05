@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Newsletter from "@/components/Newsletter";
+import InlineSubscribeCTA from "@/components/InlineSubscribeCTA";
 import { Calendar, Clock, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -72,6 +73,14 @@ const Newsletters = () => {
             <p className="text-xl text-muted-foreground">
               Stay updated on protocol changes, facilitator news, new APIs, security updates, and quick integration tutorials.
             </p>
+            
+            {/* Inline Subscribe CTA at top */}
+            <div className="mt-8">
+              <InlineSubscribeCTA 
+                title="Subscribe to get every issue"
+                description="Join builders and developers getting the x402 weekly digest delivered every Monday."
+              />
+            </div>
           </div>
 
           {isLoading ? (
