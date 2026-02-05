@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.bazaar-discovery]
 verify_jwt = false
+
+ [functions.generate-newsletter]
+ verify_jwt = false
