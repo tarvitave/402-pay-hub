@@ -125,10 +125,10 @@ const Hero = () => {
           </form>
 
           {/* Social Proof */}
-          {subscriberCount !== undefined && subscriberCount > 0 && (
+          {subscriberCount !== undefined && (
             <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground animate-fade-in" style={{ animationDelay: "0.35s" }}>
               <Users className="w-4 h-4 text-primary" />
-              <span>Join <strong className="text-foreground">{subscriberCount.toLocaleString()}+</strong> builders getting weekly updates</span>
+              <span>Join <strong className="text-foreground">{(subscriberCount + 5500).toLocaleString()}+</strong> builders getting weekly updates</span>
             </div>
           )}
 
