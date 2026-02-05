@@ -1,10 +1,12 @@
 import { Link } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Newsletter from "@/components/Newsletter";
 import InlineSubscribeCTA from "@/components/InlineSubscribeCTA";
+import SocialShareButtons from "@/components/SocialShareButtons";
 import { Calendar, Clock, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -34,6 +36,7 @@ const imageMap: Record<string, string> = {
 };
 
 const Newsletters = () => {
+  const location = useLocation();
   const { data: newsletters, isLoading } = useQuery({
     queryKey: ["newsletters-list"],
     queryFn: async () => {
@@ -73,6 +76,15 @@ const Newsletters = () => {
             <p className="text-xl text-muted-foreground">
               Stay updated on protocol changes, facilitator news, new APIs, security updates, and quick integration tutorials.
             </p>
+
+            {/* Share the newsletter page */}
+            <div className="mt-6">
+              <SocialShareButtons 
+                url={location.pathname}
+                title="x402 Weekly Newsletter - Micropayment Protocol Updates"
+                description="Stay updated on x402 protocol changes, facilitator news, and integration tutorials."
+              />
+            </div>
             
             {/* Inline Subscribe CTA at top */}
             <div className="mt-8">

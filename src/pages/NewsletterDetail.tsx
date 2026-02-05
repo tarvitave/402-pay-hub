@@ -1,8 +1,10 @@
 import { useParams, Link } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Newsletter from "@/components/Newsletter";
+import SocialShareButtons from "@/components/SocialShareButtons";
 import { Calendar, Clock, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -35,6 +37,7 @@ const imageMap: Record<string, string> = {
 
 const NewsletterDetail = () => {
   const { slug } = useParams();
+  const location = useLocation();
 
   const { data: newsletter, isLoading } = useQuery({
     queryKey: ["newsletter", slug],
@@ -138,6 +141,15 @@ const NewsletterDetail = () => {
                   {newsletter.read_time}
                 </span>
               </div>
+              
+              {/* Social Share Buttons */}
+              <div className="mt-6">
+                <SocialShareButtons 
+                  url={location.pathname}
+                  title={newsletter.title}
+                  description={newsletter.excerpt}
+                />
+              </div>
             </header>
 
             {/* Hero Image */}
@@ -207,6 +219,18 @@ const NewsletterDetail = () => {
               >
                 {newsletter.content}
               </ReactMarkdown>
+            </div>
+
+            {/* Bottom Share Buttons */}
+            <div className="mt-12 pt-8 border-t border-border">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <p className="text-muted-foreground text-sm">Enjoyed this newsletter? Share it with your network.</p>
+                <SocialShareButtons 
+                  url={location.pathname}
+                  title={newsletter.title}
+                  description={newsletter.excerpt}
+                />
+              </div>
             </div>
           </div>
         </article>
