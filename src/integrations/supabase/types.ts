@@ -265,6 +265,48 @@ export type Database = {
         }
         Relationships: []
       }
+      seo_recommendations: {
+        Row: {
+          applied_at: string | null
+          created_at: string
+          current_value: string | null
+          id: string
+          page_path: string
+          page_url: string
+          priority: string
+          recommendation_type: string
+          recommended_value: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          applied_at?: string | null
+          created_at?: string
+          current_value?: string | null
+          id?: string
+          page_path: string
+          page_url: string
+          priority?: string
+          recommendation_type: string
+          recommended_value: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          applied_at?: string | null
+          created_at?: string
+          current_value?: string | null
+          id?: string
+          page_path?: string
+          page_url?: string
+          priority?: string
+          recommendation_type?: string
+          recommended_value?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       subscribers: {
         Row: {
           confirmed: boolean | null
