@@ -1,7 +1,60 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Zap, Github, Twitter, MessageCircle } from "lucide-react";
+import { Zap, Github, Twitter, MessageCircle, ArrowRight, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const Footer = () => {
+  const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email) {
+      toast({
+        title: "Email required",
+        description: "Please enter your email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('send-newsletter', {
+        body: { email },
+      });
+
+      if (error) throw error;
+
+      if (data?.alreadySubscribed) {
+        toast({
+          title: "Already subscribed!",
+          description: "This email is already on our mailing list.",
+        });
+      } else {
+        toast({
+          title: "You're subscribed!",
+          description: "Thanks for joining our newsletter.",
+        });
+      }
+      setEmail("");
+    } catch (error: any) {
+      toast({
+        title: "Subscription failed",
+        description: error.message || "Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const footerLinks = {
     Protocol: [
       { label: "Documentation", href: "/resources" },
@@ -61,6 +114,31 @@ const Footer = () => {
               </ul>
             </div>
           ))}
+
+          {/* Newsletter Subscribe */}
+          <div className="col-span-2 md:col-span-1">
+            <h4 className="font-display font-semibold mb-4">Newsletter</h4>
+            <p className="text-sm text-muted-foreground mb-4">
+              Get weekly x402 updates delivered to your inbox.
+            </p>
+            <form onSubmit={handleSubscribe} className="flex gap-2">
+              <Input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="flex-1 h-9 bg-secondary/50 border-border text-sm"
+                disabled={isLoading}
+              />
+              <Button type="submit" size="sm" disabled={isLoading} className="shrink-0 px-3">
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ArrowRight className="h-4 w-4" />
+                )}
+              </Button>
+            </form>
+          </div>
         </div>
 
         <div className="pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4">

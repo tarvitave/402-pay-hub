@@ -2,6 +2,7 @@ import Navbar from "@/components/Navbar";
 import { Helmet } from "react-helmet-async";
 import Footer from "@/components/Footer";
 import Newsletter from "@/components/Newsletter";
+import InlineSubscribeCTA from "@/components/InlineSubscribeCTA";
 import { Button } from "@/components/ui/button";
 import { Book, Code, Users, FileText, ExternalLink, Github, MessageCircle, Youtube, Pin } from "lucide-react";
 
@@ -272,6 +273,14 @@ const Resources = () => {
               </div>
             ))}
           </div>
+        </section>
+
+        {/* Inline Subscribe CTA */}
+        <section className="container mx-auto px-4 py-8">
+          <InlineSubscribeCTA 
+            title="Get developer updates"
+            description="Subscribe for SDK releases, new facilitators, and integration guides delivered weekly."
+          />
         </section>
 
         {/* CTA */}

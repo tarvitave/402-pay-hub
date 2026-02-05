@@ -3,6 +3,7 @@ import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Newsletter from "@/components/Newsletter";
+import InlineSubscribeCTA from "@/components/InlineSubscribeCTA";
 import { Calendar, Clock, ArrowRight } from "lucide-react";
 
 const blogPosts = [
@@ -149,6 +150,14 @@ const Blog = () => {
                 </div>
               </Link>
             ))}
+          </div>
+
+          {/* Inline Subscribe CTA */}
+          <div className="mb-16">
+            <InlineSubscribeCTA 
+              title="Never miss an article"
+              description="Subscribe to get notified about new x402 tutorials, protocol updates, and developer insights."
+            />
           </div>
 
           {/* Regular Posts */}

@@ -1,7 +1,8 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, Code2, Coins, Loader2 } from "lucide-react";
+import { ArrowRight, Code2, Coins, Loader2, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -9,6 +10,20 @@ const Hero = () => {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  const { data: subscriberCount } = useQuery({
+    queryKey: ["subscriber-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("subscribers")
+        .select("*", { count: "exact", head: true })
+        .is("unsubscribed_at", null);
+      
+      if (error) throw error;
+      return count || 0;
+    },
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  });
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,8 +124,16 @@ const Hero = () => {
             </Button>
           </form>
 
+          {/* Social Proof */}
+          {subscriberCount !== undefined && subscriberCount > 0 && (
+            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground animate-fade-in" style={{ animationDelay: "0.35s" }}>
+              <Users className="w-4 h-4 text-primary" />
+              <span>Join <strong className="text-foreground">{subscriberCount.toLocaleString()}+</strong> builders getting weekly updates</span>
+            </div>
+          )}
+
           {/* Code Preview */}
-          <div className="relative max-w-2xl mx-auto animate-fade-in" style={{ animationDelay: "0.4s" }}>
+          <div className="relative max-w-2xl mx-auto mt-8 animate-fade-in" style={{ animationDelay: "0.4s" }}>
             <div className="border-gradient rounded-xl overflow-hidden shadow-elevated">
               <div className="flex items-center gap-2 px-4 py-3 bg-secondary/50 border-b border-border">
                 <div className="flex gap-1.5">
