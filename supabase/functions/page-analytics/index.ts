@@ -52,29 +52,48 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Get analytics
+    // Get analytics — use RPC / raw SQL to aggregate server-side and avoid the 1000-row limit
     if (action === "get") {
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - days);
       startDate.setHours(0, 0, 0, 0);
+      const startISO = startDate.toISOString();
 
-      const { data: pageViews, error } = await supabase
-        .from("page_views")
-        .select("*")
-        .gte("created_at", startDate.toISOString())
-        .order("created_at", { ascending: true });
+      // Daily aggregation via multiple smaller queries won't work well.
+      // Instead, paginate through ALL rows using range queries.
+      const allViews: { created_at: string; visitor_id: string; page_path: string }[] = [];
+      const pageSize = 1000;
+      let offset = 0;
+      let hasMore = true;
 
-      if (error) {
-        console.error("Error fetching page views:", error);
-        return new Response(
-          JSON.stringify({ error: "Failed to fetch analytics" }),
-          { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-        );
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from("page_views")
+          .select("created_at, visitor_id, page_path")
+          .gte("created_at", startISO)
+          .order("created_at", { ascending: true })
+          .range(offset, offset + pageSize - 1);
+
+        if (error) {
+          console.error("Error fetching page views:", error);
+          return new Response(
+            JSON.stringify({ error: "Failed to fetch analytics" }),
+            { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+          );
+        }
+
+        if (data && data.length > 0) {
+          allViews.push(...data);
+          offset += pageSize;
+          hasMore = data.length === pageSize;
+        } else {
+          hasMore = false;
+        }
       }
 
       // Group by date
       const dailyData: Record<string, { pageviews: number; visitors: Set<string> }> = {};
-      
+
       // Initialize all dates in range
       for (let i = 0; i < days; i++) {
         const date = new Date(startDate);
@@ -84,7 +103,7 @@ const handler = async (req: Request): Promise<Response> => {
       }
 
       // Populate with actual data
-      for (const view of pageViews || []) {
+      for (const view of allViews) {
         const dateKey = new Date(view.created_at).toISOString().split("T")[0];
         if (dailyData[dateKey]) {
           dailyData[dateKey].pageviews++;
@@ -103,13 +122,13 @@ const handler = async (req: Request): Promise<Response> => {
       // Calculate totals
       const totalPageviews = analytics.reduce((sum, d) => sum + d.pageviews, 0);
       const allVisitors = new Set<string>();
-      for (const view of pageViews || []) {
+      for (const view of allViews) {
         allVisitors.add(view.visitor_id);
       }
 
       // Top pages
       const pageCounts: Record<string, number> = {};
-      for (const view of pageViews || []) {
+      for (const view of allViews) {
         pageCounts[view.page_path] = (pageCounts[view.page_path] || 0) + 1;
       }
       const topPages = Object.entries(pageCounts)
