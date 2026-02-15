@@ -11,6 +11,7 @@ const Navbar = () => {
     { href: "/newsletters", label: "Newsletters", isNew: true },
     { href: "/marketplace", label: "Marketplace" },
     { href: "/about", label: "About x402" },
+    { href: "/protocols", label: "Protocols", isNew: true },
     { href: "/blog", label: "Blog" },
     { href: "/resources", label: "Resources" },
   ];
