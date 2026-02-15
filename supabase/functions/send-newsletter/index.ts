@@ -58,7 +58,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Add subscriber to database
     const { error: insertError } = await supabase
       .from("subscribers")
-      .insert({ email: email.toLowerCase().trim() });
+      .insert({ email: email.toLowerCase().trim(), confirmed: true });
 
     if (insertError) {
       console.error("Error inserting subscriber:", insertError);
