@@ -174,7 +174,7 @@
          content: generatedContent,
          hero_image: heroImage,
          read_time: "8 min read",
-         category: "GenAI Tools",
+         category: "Weekly Digest",
          industry: "General",
        })
        .select()
