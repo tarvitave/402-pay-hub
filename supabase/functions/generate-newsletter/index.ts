@@ -160,7 +160,7 @@
  
      // Use a rotating hero image (cycle through 1-10)
      const heroImageNum = ((weekNumber - 1) % 10) + 1;
-     const heroImage = `/newsletter-week-${heroImageNum.toString().padStart(2, "0")}.jpg`;
+     const heroImage = `/src/assets/newsletter-week-${heroImageNum.toString().padStart(2, "0")}.jpg`;
  
      // Insert the newsletter as a draft (no sent_at means draft)
      const { data: newsletter, error: insertError } = await supabase
