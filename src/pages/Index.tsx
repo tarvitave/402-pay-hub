@@ -5,6 +5,7 @@ import Features from "@/components/Features";
 import HowItWorks from "@/components/HowItWorks";
 import BlogPreview from "@/components/BlogPreview";
 import Sponsors from "@/components/Sponsors";
+import ProtocolStats from "@/components/ProtocolStats";
 import Newsletter from "@/components/Newsletter";
 import Footer from "@/components/Footer";
 
@@ -22,6 +23,7 @@ const Index = () => {
       <Features />
       <HowItWorks />
       <BlogPreview />
+      <ProtocolStats />
       <Sponsors />
       <Newsletter />
       <Footer />
