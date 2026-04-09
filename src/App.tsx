@@ -15,6 +15,10 @@ import Admin from "./pages/Admin";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import AlternateProtocols from "./pages/AlternateProtocols";
+import Ecosystem from "./pages/Ecosystem";
+import Tutorials from "./pages/Tutorials";
+import UseCases from "./pages/UseCases";
+import Glossary from "./pages/Glossary";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +41,10 @@ const App = () => (
           <Route path="/admin" element={<Admin />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/protocols" element={<AlternateProtocols />} />
+          <Route path="/ecosystem" element={<Ecosystem />} />
+          <Route path="/tutorials" element={<Tutorials />} />
+          <Route path="/use-cases" element={<UseCases />} />
+          <Route path="/glossary" element={<Glossary />} />
           <Route path="/terms" element={<TermsOfService />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
