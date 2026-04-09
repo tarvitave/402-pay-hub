@@ -56,7 +56,7 @@ const ProtocolStats = () => {
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors">
                   {stat.icon}
                 </div>
-                <span className="text-xs font-mono text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full">
+                <span className="text-xs font-mono text-primary bg-primary/10 px-2 py-0.5 rounded-full">
                   {stat.change}
                 </span>
               </div>
