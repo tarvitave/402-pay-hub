@@ -20,35 +20,55 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { email, name }: NewsletterRequest = await req.json();
 
-    if (!email) {
+    // Input validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const normalizedEmail = typeof email === "string" ? email.toLowerCase().trim() : "";
+    if (!normalizedEmail || normalizedEmail.length > 320 || !emailRegex.test(normalizedEmail)) {
       return new Response(
-        JSON.stringify({ error: "Email is required" }),
+        JSON.stringify({ error: "Invalid email address" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
+    const safeName = typeof name === "string"
+      ? name.trim().slice(0, 100).replace(/[<>"'&]/g, "")
+      : "";
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Basic rate limiting: max 3 subscription attempts per email per hour
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { count: recentCount } = await supabase
+      .from("subscribers")
+      .select("id", { count: "exact", head: true })
+      .eq("email", normalizedEmail)
+      .gte("subscribed_at", oneHourAgo);
+    if ((recentCount ?? 0) > 3) {
+      return new Response(
+        JSON.stringify({ error: "Too many requests. Please try again later." }),
+        { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     // Check if email already exists
     const { data: existingSubscriber, error: checkError } = await supabase
       .from("subscribers")
       .select("id")
-      .eq("email", email.toLowerCase().trim())
+      .eq("email", normalizedEmail)
       .maybeSingle();
 
     if (checkError) {
       console.error("Error checking subscriber:", checkError);
       return new Response(
-        JSON.stringify({ error: "Failed to check subscription status" }),
+        JSON.stringify({ error: "Unable to process subscription. Please try again later." }),
         { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
     if (existingSubscriber) {
-      console.log(`Email already subscribed: ${email}`);
+      console.log("Duplicate subscription attempt");
       return new Response(
         JSON.stringify({ alreadySubscribed: true, message: "You're already subscribed!" }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
@@ -58,12 +78,12 @@ const handler = async (req: Request): Promise<Response> => {
     // Add subscriber to database
     const { error: insertError } = await supabase
       .from("subscribers")
-      .insert({ email: email.toLowerCase().trim(), confirmed: true });
+      .insert({ email: normalizedEmail, confirmed: true });
 
     if (insertError) {
       console.error("Error inserting subscriber:", insertError);
       return new Response(
-        JSON.stringify({ error: "Failed to save subscription" }),
+        JSON.stringify({ error: "Unable to process subscription. Please try again later." }),
         { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
@@ -72,12 +92,12 @@ const handler = async (req: Request): Promise<Response> => {
     if (!postmarkApiKey) {
       console.error("POSTMARK_API_KEY not configured");
       return new Response(
-        JSON.stringify({ error: "Email service not configured" }),
+        JSON.stringify({ error: "Unable to process subscription. Please try again later." }),
         { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    console.log(`Sending welcome email to: ${email}`);
+    console.log("Sending welcome email");
 
     // Send welcome email via Postmark
     const response = await fetch("https://api.postmarkapp.com/email", {
@@ -89,13 +109,13 @@ const handler = async (req: Request): Promise<Response> => {
       },
       body: JSON.stringify({
         From: "newsletter@x402info.com", // Update this to your verified sender
-        To: email,
+        To: normalizedEmail,
         Subject: "Welcome to x402 Protocol Newsletter!",
         HtmlBody: `
           <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
             <h1 style="color: #00f0ff; margin-bottom: 24px;">Welcome to x402 Protocol!</h1>
             <p style="color: #333; font-size: 16px; line-height: 1.6;">
-              ${name ? `Hi ${name},` : 'Hi there,'}<br><br>
+              ${safeName ? `Hi ${safeName},` : 'Hi there,'}<br><br>
               Thank you for subscribing to the x402 Protocol newsletter! You're now part of a community of developers and builders shaping the future of web monetization.
             </p>
             <p style="color: #333; font-size: 16px; line-height: 1.6;">
@@ -121,7 +141,7 @@ const handler = async (req: Request): Promise<Response> => {
             </p>
           </div>
         `,
-        TextBody: `Welcome to x402 Protocol Newsletter!\n\n${name ? `Hi ${name},` : 'Hi there,'}\n\nThank you for subscribing! You'll receive weekly insights on micropayments, protocol updates, and the future of web monetization.\n\nBest regards,\nThe x402 Protocol Team`,
+        TextBody: `Welcome to x402 Protocol Newsletter!\n\n${safeName ? `Hi ${safeName},` : 'Hi there,'}\n\nThank you for subscribing! You'll receive weekly insights on micropayments, protocol updates, and the future of web monetization.\n\nBest regards,\nThe x402 Protocol Team`,
         MessageStream: "broadcast",
       }),
     });
@@ -131,21 +151,21 @@ const handler = async (req: Request): Promise<Response> => {
     if (!response.ok) {
       console.error("Postmark API error:", result);
       return new Response(
-        JSON.stringify({ error: result.Message || "Failed to send email" }),
-        { status: response.status, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        JSON.stringify({ error: "Unable to send confirmation email. Please try again later." }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    console.log("Email sent successfully:", result);
+    console.log("Email sent successfully");
 
     return new Response(
       JSON.stringify({ success: true, messageId: result.MessageID }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: any) {
-    console.error("Error in send-newsletter function:", error);
+    console.error("Error in send-newsletter function:", error?.message ?? error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "Unable to process subscription. Please try again later." }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
