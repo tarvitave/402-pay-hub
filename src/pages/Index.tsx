@@ -6,6 +6,8 @@ import HowItWorks from "@/components/HowItWorks";
 import BlogPreview from "@/components/BlogPreview";
 import Sponsors from "@/components/Sponsors";
 import ProtocolStats from "@/components/ProtocolStats";
+import TryX402Demo from "@/components/TryX402Demo";
+import HomePreviews from "@/components/HomePreviews";
 import Newsletter from "@/components/Newsletter";
 import Footer from "@/components/Footer";
 
@@ -22,6 +24,8 @@ const Index = () => {
       <Hero />
       <Features />
       <HowItWorks />
+      <TryX402Demo />
+      <HomePreviews />
       <BlogPreview />
       <ProtocolStats />
       <Sponsors />
