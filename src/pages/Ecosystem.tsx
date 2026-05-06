@@ -3,6 +3,7 @@ import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Newsletter from "@/components/Newsletter";
+import SubmitProjectForm from "@/components/SubmitProjectForm";
 import { ExternalLink, Search, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
@@ -226,6 +227,10 @@ const Ecosystem = () => {
             {filtered.length === 0 && (
               <p className="text-center text-muted-foreground py-12">No projects match your search. Try a different term or category.</p>
             )}
+          </div>
+
+          <div className="max-w-3xl mx-auto mt-20">
+            <SubmitProjectForm />
           </div>
         </div>
       </main>
