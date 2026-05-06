@@ -17,8 +17,11 @@ import TermsOfService from "./pages/TermsOfService";
 import AlternateProtocols from "./pages/AlternateProtocols";
 import Ecosystem from "./pages/Ecosystem";
 import Tutorials from "./pages/Tutorials";
+import TutorialDetail from "./pages/TutorialDetail";
 import UseCases from "./pages/UseCases";
 import Glossary from "./pages/Glossary";
+import Comparisons from "./pages/Comparisons";
+import CompareDetail from "./pages/CompareDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,8 +46,11 @@ const App = () => (
           <Route path="/protocols" element={<AlternateProtocols />} />
           <Route path="/ecosystem" element={<Ecosystem />} />
           <Route path="/tutorials" element={<Tutorials />} />
+          <Route path="/tutorials/:slug" element={<TutorialDetail />} />
           <Route path="/use-cases" element={<UseCases />} />
           <Route path="/glossary" element={<Glossary />} />
+          <Route path="/compare" element={<Comparisons />} />
+          <Route path="/compare/:slug" element={<CompareDetail />} />
           <Route path="/terms" element={<TermsOfService />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
