@@ -11,6 +11,7 @@ const Navbar = () => {
     { href: "/ecosystem", label: "Ecosystem", isNew: true },
     { href: "/tutorials", label: "Tutorials", isNew: true },
     { href: "/use-cases", label: "Use Cases", isNew: true },
+    { href: "/compare", label: "Compare", isNew: true },
     { href: "/protocols", label: "Protocols" },
     { href: "/glossary", label: "Glossary" },
     { href: "/newsletters", label: "Newsletters" },

@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      ecosystem_submissions: {
+        Row: {
+          category: string
+          contact_email: string
+          created_at: string
+          description: string
+          id: string
+          project_name: string
+          status: string
+          url: string
+        }
+        Insert: {
+          category: string
+          contact_email: string
+          created_at?: string
+          description: string
+          id?: string
+          project_name: string
+          status?: string
+          url: string
+        }
+        Update: {
+          category?: string
+          contact_email?: string
+          created_at?: string
+          description?: string
+          id?: string
+          project_name?: string
+          status?: string
+          url?: string
+        }
+        Relationships: []
+      }
       email_events: {
         Row: {
           bounce_description: string | null
