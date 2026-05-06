@@ -1,5 +1,3 @@
-import type { ReactNode } from "react";
-
 export type Difficulty = "Beginner" | "Intermediate" | "Advanced";
 
 export interface TutorialStep {
