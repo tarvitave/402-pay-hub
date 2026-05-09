@@ -38,6 +38,19 @@ const handler = async (req: Request): Promise<Response> => {
       .from("email_events")
       .select("event_type");
 
+    // Fetch full subscribers list (newest first)
+    const { data: subscribersList } = await supabase
+      .from("subscribers")
+      .select("id, email, subscribed_at, confirmed, unsubscribed_at")
+      .order("subscribed_at", { ascending: false });
+
+    // Fetch recent email events
+    const { data: recentEvents } = await supabase
+      .from("email_events")
+      .select("id, message_id, recipient, event_type, created_at, bounce_description, link_clicked")
+      .order("created_at", { ascending: false })
+      .limit(500);
+
     const counts: Record<string, number> = {
       delivered: 0,
       bounced: 0,
@@ -72,6 +85,9 @@ const handler = async (req: Request): Promise<Response> => {
         openRate: counts.delivered > 0 ? Math.round((counts.opened / counts.delivered) * 100) : 0,
         clickRate: counts.delivered > 0 ? Math.round((counts.clicked / counts.delivered) * 100) : 0,
       },
+      subscribersList: subscribersList || [],
+      recentEvents: recentEvents || [],
+      totalEvents: eventCounts?.length || 0,
     };
 
     console.log("Stats:", stats);

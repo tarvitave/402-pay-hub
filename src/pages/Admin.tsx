@@ -79,32 +79,19 @@ const Admin = () => {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      // Fetch subscribers
-      const { data: subscribersData } = await supabase
-        .from("subscribers")
-        .select("*")
-        .order("subscribed_at", { ascending: false });
-      setSubscribers(subscribersData || []);
-
-      // Fetch email events count
-      const { count: eventsCount } = await supabase
-        .from("email_events")
-        .select("*", { count: "exact", head: true });
-      setTotalEvents(eventsCount || 0);
-
-      // Fetch email events with pagination
-      const { data: eventsData } = await supabase
-        .from("email_events")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .range((eventsPage - 1) * EVENTS_PER_PAGE, eventsPage * EVENTS_PER_PAGE - 1);
-      setEvents(eventsData || []);
-
-      // Fetch stats from edge function
+      // Fetch stats + subscribers + events from edge function (RLS-protected tables)
       const { data: adminStats } = await supabase.functions.invoke("admin-stats");
+      const subscribersData: Subscriber[] = adminStats?.subscribersList || [];
+      setSubscribers(subscribersData);
+
+      const allEvents: EmailEvent[] = adminStats?.recentEvents || [];
+      setTotalEvents(adminStats?.totalEvents || allEvents.length);
+      const start = (eventsPage - 1) * EVENTS_PER_PAGE;
+      setEvents(allEvents.slice(start, start + EVENTS_PER_PAGE));
+
       if (adminStats) {
         setStats({
-          totalSubscribers: adminStats.subscribers?.total || subscribersData?.length || 0,
+          totalSubscribers: adminStats.subscribers?.total || subscribersData.length || 0,
           confirmedSubscribers: adminStats.subscribers?.confirmed || 0,
           totalDelivered: adminStats.emails?.delivered || 0,
           totalOpened: adminStats.emails?.opened || 0,
