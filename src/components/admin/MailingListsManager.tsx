@@ -62,6 +62,7 @@ export default function MailingListsManager() {
   const [dropStatus, setDropStatus] = useState<string | null>(null);
   const [isDeduping, setIsDeduping] = useState(false);
   const [isCleaning, setIsCleaning] = useState(false);
+  const [emailServers, setEmailServers] = useState<string[] | null>(null);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const dropInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -120,6 +121,17 @@ export default function MailingListsManager() {
 
     setDropStatus(null);
     fetchLists();
+  };
+
+  const fetchEmailServers = async () => {
+    try {
+      const response = await supabase.functions.invoke("send-invites", {
+        body: { action: "check-email-servers" },
+      });
+      if (!response.error && response.data?.servers) setEmailServers(response.data.servers);
+    } catch (error) {
+      console.error("Error checking email servers:", error);
+    }
   };
 
   const handleDedupeAll = async () => {
@@ -409,6 +421,7 @@ export default function MailingListsManager() {
   useEffect(() => {
     fetchLists();
     fetchSettings();
+    fetchEmailServers();
   }, []);
 
   const formatDate = (dateString: string | null) => {
@@ -491,6 +504,11 @@ export default function MailingListsManager() {
               Remove Bounced & Spam Emails
             </Button>
           </div>
+          {emailServers && emailServers.length > 0 && (
+            <p className="text-xs text-muted-foreground">
+              Connected email servers ({emailServers.length}): {emailServers.join(", ")}
+            </p>
+          )}
           <p className="text-xs text-muted-foreground">
             De-duplication keeps one copy of each address (preferring already-sent contacts). Bounce cleanup pulls
             hard bounces, spam complaints and suppressions from your email provider and removes them everywhere.
