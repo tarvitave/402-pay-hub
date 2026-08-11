@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Trash2, Upload, Send, ChevronDown, ChevronUp, FileText, Loader2, Pause, Play } from "lucide-react";
+import { Plus, Trash2, Upload, Send, ChevronDown, ChevronUp, FileText, Loader2, Pause, Play, UploadCloud, Copy, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 
 interface MailingList {
@@ -58,7 +58,116 @@ export default function MailingListsManager() {
   });
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [isTogglingPause, setIsTogglingPause] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dropStatus, setDropStatus] = useState<string | null>(null);
+  const [isDeduping, setIsDeduping] = useState(false);
+  const [isCleaning, setIsCleaning] = useState(false);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const dropInputRef = useRef<HTMLInputElement | null>(null);
+
+  const parseContacts = (text: string): Array<{ name?: string; email: string }> => {
+    const lines = text.split(/\r?\n/).filter((line) => line.trim());
+    const contacts: Array<{ name?: string; email: string }> = [];
+    const startIndex = lines[0]?.toLowerCase().includes("email") && !lines[0].includes("@") ? 1 : 0;
+
+    for (let i = startIndex; i < lines.length; i++) {
+      const parts = lines[i].split(/[,;\t]/).map((p) => p.trim().replace(/^["']|["']$/g, ""));
+      const emailIndex = parts.findIndex((p) => p.includes("@"));
+      if (emailIndex >= 0) {
+        const nameIndex = emailIndex === 0 ? 1 : 0;
+        contacts.push({ email: parts[emailIndex], name: parts[nameIndex] || undefined });
+      }
+    }
+    return contacts;
+  };
+
+  const processDroppedFiles = async (files: File[]) => {
+    const csvFiles = files.filter((f) => /\.(csv|tsv|txt)$/i.test(f.name));
+    if (csvFiles.length === 0) {
+      toast.error("Drop CSV, TSV or TXT files with name and email columns");
+      return;
+    }
+
+    for (const file of csvFiles) {
+      const listName = file.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim() || file.name;
+      setDropStatus(`Importing "${listName}"...`);
+      try {
+        const contacts = parseContacts(await file.text());
+        if (contacts.length === 0) {
+          toast.error(`No email addresses found in ${file.name}`);
+          continue;
+        }
+
+        const created = await supabase.functions.invoke("send-invites", {
+          body: { action: "create-list", name: listName, description: `Imported from ${file.name}` },
+        });
+        if (created.error) throw created.error;
+
+        const listId = created.data?.id;
+        const uploaded = await supabase.functions.invoke("send-invites", {
+          body: { action: "upload", contacts, listId },
+        });
+        if (uploaded.error) throw uploaded.error;
+
+        toast.success(
+          `"${listName}": added ${uploaded.data.added} contacts, skipped ${uploaded.data.skipped} duplicates`
+        );
+      } catch (error) {
+        console.error("Error importing file:", file.name, error);
+        toast.error(`Failed to import ${file.name}`);
+      }
+    }
+
+    setDropStatus(null);
+    fetchLists();
+  };
+
+  const handleDedupeAll = async () => {
+    if (!confirm("Remove duplicate emails so each address exists in only one mailing list?")) return;
+    setIsDeduping(true);
+    try {
+      const response = await supabase.functions.invoke("send-invites", {
+        body: { action: "dedupe-all" },
+      });
+      if (response.error) throw response.error;
+      toast.success(
+        `Removed ${response.data.removed} duplicates — ${response.data.unique} unique addresses remain`
+      );
+      fetchLists();
+      setInvites({});
+      if (expandedListId) fetchInvites(expandedListId);
+    } catch (error) {
+      console.error("Error deduplicating:", error);
+      toast.error("Failed to deduplicate mailing lists");
+    } finally {
+      setIsDeduping(false);
+    }
+  };
+
+  const handleCleanBadEmails = async () => {
+    setIsCleaning(true);
+    try {
+      const response = await supabase.functions.invoke("send-invites", {
+        body: { action: "clean-bad-emails" },
+      });
+      if (response.error) throw response.error;
+      const d = response.data;
+      toast.success(
+        `Checked ${d.servers} email server(s): found ${d.badEmails} bad addresses, removed ${d.removedInvites} contacts`
+      );
+      if (!d.usedAccountToken) {
+        toast.info("Only the default email server was scanned. Add an account-level API token to scan all servers.");
+      }
+      fetchLists();
+      setInvites({});
+      if (expandedListId) fetchInvites(expandedListId);
+    } catch (error) {
+      console.error("Error cleaning bad emails:", error);
+      toast.error("Failed to clean bad/spam emails");
+    } finally {
+      setIsCleaning(false);
+    }
+  };
 
   const fetchLists = async () => {
     try {
@@ -156,25 +265,7 @@ export default function MailingListsManager() {
 
     setUploadingListId(listId);
     try {
-      const text = await file.text();
-      const lines = text.split("\n").filter((line) => line.trim());
-      const contacts: Array<{ name?: string; email: string }> = [];
-
-      const startIndex = lines[0]?.toLowerCase().includes("email") ? 1 : 0;
-
-      for (let i = startIndex; i < lines.length; i++) {
-        const parts = lines[i].split(/[,\t]/).map((p) => p.trim().replace(/^["']|["']$/g, ""));
-        if (parts.length >= 1) {
-          const emailIndex = parts.findIndex((p) => p.includes("@"));
-          if (emailIndex >= 0) {
-            const nameIndex = emailIndex === 0 ? 1 : 0;
-            contacts.push({
-              email: parts[emailIndex],
-              name: parts[nameIndex] || undefined,
-            });
-          }
-        }
-      }
+      const contacts = parseContacts(await file.text());
 
       if (contacts.length === 0) {
         toast.error("No valid email addresses found in CSV");
