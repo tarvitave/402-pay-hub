@@ -90,8 +90,15 @@ export default function MailingListsManager() {
       return;
     }
 
+    const existingNames = new Set(lists.map((l) => l.name.trim().toLowerCase()));
+
     for (const file of csvFiles) {
-      const listName = file.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim() || file.name;
+      const listName = file.name;
+      if (existingNames.has(listName.trim().toLowerCase())) {
+        toast.info(`"${listName}" was already imported — skipped`);
+        continue;
+      }
+      existingNames.add(listName.trim().toLowerCase());
       setDropStatus(`Importing "${listName}"...`);
       try {
         const contacts = parseContacts(await file.text());
