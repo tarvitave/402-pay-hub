@@ -426,6 +426,78 @@ export default function MailingListsManager() {
 
   return (
     <div className="space-y-6">
+      {/* Drag & drop import + list hygiene */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <UploadCloud className="h-5 w-5" />
+            Import Mailing Lists
+          </CardTitle>
+          <CardDescription>
+            Drop CSV files with name and email columns — each file becomes a new mailing list named after the file.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setIsDragging(false);
+              processDroppedFiles(Array.from(e.dataTransfer.files));
+            }}
+            onClick={() => dropInputRef.current?.click()}
+            className={`cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
+              isDragging ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+            }`}
+          >
+            <input
+              ref={dropInputRef}
+              type="file"
+              accept=".csv,.tsv,.txt"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                processDroppedFiles(Array.from(e.target.files || []));
+                e.currentTarget.value = "";
+              }}
+            />
+            {dropStatus ? (
+              <div className="flex items-center justify-center gap-2 text-sm">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {dropStatus}
+              </div>
+            ) : (
+              <>
+                <FileText className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                <p className="text-sm font-medium">Drag & drop CSV files here</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Or click to browse. The file name becomes the mailing list name.
+                </p>
+              </>
+            )}
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={handleDedupeAll} disabled={isDeduping}>
+              {isDeduping ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Copy className="h-4 w-4 mr-2" />}
+              De-duplicate All Lists
+            </Button>
+            <Button variant="outline" onClick={handleCleanBadEmails} disabled={isCleaning}>
+              {isCleaning ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ShieldAlert className="h-4 w-4 mr-2" />}
+              Remove Bounced & Spam Emails
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            De-duplication keeps one copy of each address (preferring already-sent contacts). Bounce cleanup pulls
+            hard bounces, spam complaints and suppressions from your email provider and removes them everywhere.
+          </p>
+        </CardContent>
+      </Card>
+
       {/* Email Settings */}
       <Card>
         <CardHeader>
