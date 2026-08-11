@@ -64,6 +64,7 @@ export default function MailingListsManager() {
   const [isCleaning, setIsCleaning] = useState(false);
   const [emailServers, setEmailServers] = useState<string[] | null>(null);
   const [suppressedCount, setSuppressedCount] = useState<number | null>(null);
+  const [sortBy, setSortBy] = useState<"created_desc" | "created_asc" | "name_asc" | "name_desc">("created_desc");
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const dropInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -452,6 +453,19 @@ export default function MailingListsManager() {
     return new Date(dateString).toLocaleString();
   };
 
+  const sortedLists = [...lists].sort((a, b) => {
+    switch (sortBy) {
+      case "name_asc":
+        return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+      case "name_desc":
+        return b.name.localeCompare(a.name, undefined, { sensitivity: "base" });
+      case "created_asc":
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      default:
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    }
+  });
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -658,13 +672,33 @@ export default function MailingListsManager() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {lists.map((list) => (
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm text-muted-foreground">{lists.length} mailing lists</p>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="list-sort" className="text-xs text-muted-foreground">
+                Sort by
+              </Label>
+              <select
+                id="list-sort"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+              >
+                <option value="created_desc">Newest first</option>
+                <option value="created_asc">Oldest first</option>
+                <option value="name_asc">Name (A–Z)</option>
+                <option value="name_desc">Name (Z–A)</option>
+              </select>
+            </div>
+          </div>
+          {sortedLists.map((list) => (
             <Card key={list.id}>
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <CardTitle className="text-lg">{list.name}</CardTitle>
                     {list.description && <CardDescription>{list.description}</CardDescription>}
+                    <p className="text-xs text-muted-foreground mt-1">Created {formatDate(list.created_at)}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     {list.paused && <Badge variant="outline" className="text-amber-600 border-amber-600">Paused</Badge>}
