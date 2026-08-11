@@ -184,6 +184,22 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Suppression list summary
+    if (action === "suppression-stats") {
+      const { count } = await supabase
+        .from("email_suppressions")
+        .select("id", { count: "exact", head: true });
+      const { data: recent } = await supabase
+        .from("email_suppressions")
+        .select("email, reason, last_seen_at")
+        .order("last_seen_at", { ascending: false })
+        .limit(20);
+      return new Response(
+        JSON.stringify({ total: count || 0, recent: recent || [] }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     // Pull bad/spam addresses from Postmark (all servers when an account token is set) and remove them
     if (action === "clean-bad-emails") {
       const accountToken = Deno.env.get("POSTMARK_ACCOUNT_API_TOKEN");
