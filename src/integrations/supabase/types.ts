@@ -142,6 +142,39 @@ export type Database = {
           },
         ]
       }
+      email_suppressions: {
+        Row: {
+          created_at: string
+          description: string | null
+          email: string
+          id: string
+          last_seen_at: string
+          reason: string
+          source: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          email: string
+          id?: string
+          last_seen_at?: string
+          reason?: string
+          source?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          email?: string
+          id?: string
+          last_seen_at?: string
+          reason?: string
+          source?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       invite_contacts: {
         Row: {
           created_at: string

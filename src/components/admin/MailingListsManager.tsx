@@ -63,6 +63,7 @@ export default function MailingListsManager() {
   const [isDeduping, setIsDeduping] = useState(false);
   const [isCleaning, setIsCleaning] = useState(false);
   const [emailServers, setEmailServers] = useState<string[] | null>(null);
+  const [suppressedCount, setSuppressedCount] = useState<number | null>(null);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const dropInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -123,6 +124,19 @@ export default function MailingListsManager() {
     fetchLists();
   };
 
+  const fetchSuppressionStats = async () => {
+    try {
+      const response = await supabase.functions.invoke("send-invites", {
+        body: { action: "suppression-stats" },
+      });
+      if (!response.error && typeof response.data?.total === "number") {
+        setSuppressedCount(response.data.total);
+      }
+    } catch (error) {
+      console.error("Error fetching suppression stats:", error);
+    }
+  };
+
   const fetchEmailServers = async () => {
     try {
       const response = await supabase.functions.invoke("send-invites", {
@@ -165,7 +179,7 @@ export default function MailingListsManager() {
       if (response.error) throw response.error;
       const d = response.data;
       toast.success(
-        `Checked ${d.servers} email server(s): found ${d.badEmails} bad addresses, removed ${d.removedInvites} contacts`
+        `Checked ${d.servers} email server(s): ${d.badEmails} bad addresses suppressed, removed ${d.removedInvites} contacts`
       );
       if (!d.usedAccountToken) {
         toast.info("Only the default email server was scanned. Add an account-level API token to scan all servers.");
@@ -177,6 +191,7 @@ export default function MailingListsManager() {
       console.error("Error cleaning bad emails:", error);
       toast.error("Failed to clean bad/spam emails");
     } finally {
+      fetchSuppressionStats();
       setIsCleaning(false);
     }
   };
@@ -422,6 +437,7 @@ export default function MailingListsManager() {
     fetchLists();
     fetchSettings();
     fetchEmailServers();
+    fetchSuppressionStats();
   }, []);
 
   const formatDate = (dateString: string | null) => {
@@ -509,9 +525,16 @@ export default function MailingListsManager() {
               Connected email servers ({emailServers.length}): {emailServers.join(", ")}
             </p>
           )}
+          {suppressedCount !== null && (
+            <p className="text-xs text-muted-foreground">
+              Suppression list: {suppressedCount.toLocaleString()} blocked addresses (refreshed automatically every
+              night at 3am UTC).
+            </p>
+          )}
           <p className="text-xs text-muted-foreground">
             De-duplication keeps one copy of each address (preferring already-sent contacts). Bounce cleanup pulls
-            hard bounces, spam complaints and suppressions from your email provider and removes them everywhere.
+            hard bounces, spam complaints and suppressions from your email provider, stores them in the suppression
+            list, and removes them everywhere. Suppressed addresses are blocked on import, on signup and at send time.
           </p>
         </CardContent>
       </Card>

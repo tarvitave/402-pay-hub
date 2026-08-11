@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 interface InviteRequest {
-  action: "get-lists" | "create-list" | "delete-list" | "list-invites" | "upload" | "send" | "pause" | "resume" | "pause-list" | "resume-list" | "remove" | "status" | "get-settings" | "update-settings" | "dedupe-all" | "clean-bad-emails" | "check-email-servers";
+  action: "get-lists" | "create-list" | "delete-list" | "list-invites" | "upload" | "send" | "pause" | "resume" | "pause-list" | "resume-list" | "remove" | "status" | "get-settings" | "update-settings" | "dedupe-all" | "clean-bad-emails" | "check-email-servers" | "suppression-stats";
   listId?: string;
   name?: string;
   description?: string;
@@ -22,6 +22,28 @@ interface InviteRequest {
 const EMAILS_PER_INVOCATION = 5;
 const BATCH_SIZE = 500;
 const PAGE_SIZE = 1000;
+
+// Helper to fetch all emails from a table with pagination
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function fetchSuppressed(supabase: any): Promise<Set<string>> {
+  const emails = new Set<string>();
+  let offset = 0;
+  while (true) {
+    const { data, error } = await supabase
+      .from("email_suppressions")
+      .select("email")
+      .range(offset, offset + PAGE_SIZE - 1);
+    if (error) {
+      console.error("suppression fetch error:", error);
+      break;
+    }
+    if (!data || data.length === 0) break;
+    for (const row of data) emails.add(String(row.email).toLowerCase().trim());
+    if (data.length < PAGE_SIZE) break;
+    offset += PAGE_SIZE;
+  }
+  return emails;
+}
 
 // Helper to fetch all emails from a table with pagination
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -162,6 +184,22 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Suppression list summary
+    if (action === "suppression-stats") {
+      const { count } = await supabase
+        .from("email_suppressions")
+        .select("id", { count: "exact", head: true });
+      const { data: recent } = await supabase
+        .from("email_suppressions")
+        .select("email, reason, last_seen_at")
+        .order("last_seen_at", { ascending: false })
+        .limit(20);
+      return new Response(
+        JSON.stringify({ total: count || 0, recent: recent || [] }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     // Pull bad/spam addresses from Postmark (all servers when an account token is set) and remove them
     if (action === "clean-bad-emails") {
       const accountToken = Deno.env.get("POSTMARK_ACCOUNT_API_TOKEN");
@@ -253,9 +291,27 @@ const handler = async (req: Request): Promise<Response> => {
       const all = Array.from(badEmails);
       let removedInvites = 0;
       let unsubscribed = 0;
+      let suppressedStored = 0;
 
       for (let i = 0; i < all.length; i += BATCH_SIZE) {
         const chunk = all.slice(i, i + BATCH_SIZE);
+
+        // Remember them permanently in the suppression table
+        const { data: stored, error: supError } = await supabase
+          .from("email_suppressions")
+          .upsert(
+            chunk.map((email) => ({
+              email,
+              reason: "bounce",
+              source: "postmark",
+              last_seen_at: new Date().toISOString(),
+            })),
+            { onConflict: "email" }
+          )
+          .select("id");
+        if (supError) console.error("suppression upsert error:", supError);
+        else suppressedStored += stored?.length || 0;
+
         const { data: deleted, error } = await supabase
           .from("email_invites")
           .delete()
@@ -282,6 +338,7 @@ const handler = async (req: Request): Promise<Response> => {
           badEmails: all.length,
           removedInvites,
           unsubscribed,
+          suppressedStored,
           perServer,
         }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
@@ -449,10 +506,14 @@ const handler = async (req: Request): Promise<Response> => {
       const existingInvites = await fetchAllEmails(supabase, "email_invites");
       console.log(`Found ${existingInvites.size} existing invites`);
 
+      const suppressed = await fetchSuppressed(supabase);
+      console.log(`Loaded ${suppressed.size} suppressed addresses`);
+
       // Filter out duplicates and invalid emails
       const validContacts: Array<{ email: string; name: string | null; status: string; list_id: string | null }> = [];
       let skippedInvalid = 0;
       let skippedDuplicate = 0;
+      let skippedSuppressed = 0;
 
       for (const contact of contacts) {
         const email = contact.email?.toLowerCase().trim();
@@ -463,6 +524,11 @@ const handler = async (req: Request): Promise<Response> => {
 
         if (existingSubscribers.has(email) || existingInvites.has(email)) {
           skippedDuplicate++;
+          continue;
+        }
+
+        if (suppressed.has(email)) {
+          skippedSuppressed++;
           continue;
         }
 
@@ -502,10 +568,11 @@ const handler = async (req: Request): Promise<Response> => {
         JSON.stringify({
           success: true,
           added: totalInserted,
-          skipped: skippedInvalid + skippedDuplicate,
+          skipped: skippedInvalid + skippedDuplicate + skippedSuppressed,
           details: {
             invalid: skippedInvalid,
             duplicate: skippedDuplicate,
+            suppressed: skippedSuppressed,
             existingSubscribers: existingSubscribers.size,
             existingInvites: existingInvites.size,
           },
@@ -595,8 +662,30 @@ const handler = async (req: Request): Promise<Response> => {
       const subscribeUrl = "https://x402info.com/#newsletter";
       let sent = 0;
       let failed = 0;
+      let suppressedSkipped = 0;
+
+      // Validate this batch against the suppression table before sending
+      const batchEmails = pendingContacts.map((c: { email: string }) => String(c.email).toLowerCase().trim());
+      const { data: suppressedRows, error: suppressedError } = await supabase
+        .from("email_suppressions")
+        .select("email")
+        .in("email", batchEmails);
+      if (suppressedError) console.error("suppression check error:", suppressedError);
+      const suppressedSet = new Set(
+        (suppressedRows || []).map((r: { email: string }) => String(r.email).toLowerCase().trim())
+      );
 
       for (const contact of pendingContacts) {
+        if (suppressedSet.has(String(contact.email).toLowerCase().trim())) {
+          console.log(`Skipping suppressed address: ${contact.email}`);
+          await supabase
+            .from("email_invites")
+            .update({ status: "suppressed" })
+            .eq("id", contact.id);
+          suppressedSkipped++;
+          continue;
+        }
+
         const personalizedTemplate = emailTemplate
           .replace(/\{\{name\}\}/g, contact.name || "there")
           .replace(/\{\{subscribe_url\}\}/g, subscribeUrl);
@@ -653,10 +742,10 @@ const handler = async (req: Request): Promise<Response> => {
         }
       }
 
-      console.log(`Completed: sent ${sent}, failed ${failed}`);
+      console.log(`Completed: sent ${sent}, failed ${failed}, suppressed ${suppressedSkipped}`);
 
       return new Response(
-        JSON.stringify({ success: true, sent, failed }),
+        JSON.stringify({ success: true, sent, failed, suppressed: suppressedSkipped }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
