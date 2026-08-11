@@ -490,10 +490,14 @@ const handler = async (req: Request): Promise<Response> => {
       const existingInvites = await fetchAllEmails(supabase, "email_invites");
       console.log(`Found ${existingInvites.size} existing invites`);
 
+      const suppressed = await fetchSuppressed(supabase);
+      console.log(`Loaded ${suppressed.size} suppressed addresses`);
+
       // Filter out duplicates and invalid emails
       const validContacts: Array<{ email: string; name: string | null; status: string; list_id: string | null }> = [];
       let skippedInvalid = 0;
       let skippedDuplicate = 0;
+      let skippedSuppressed = 0;
 
       for (const contact of contacts) {
         const email = contact.email?.toLowerCase().trim();
@@ -504,6 +508,11 @@ const handler = async (req: Request): Promise<Response> => {
 
         if (existingSubscribers.has(email) || existingInvites.has(email)) {
           skippedDuplicate++;
+          continue;
+        }
+
+        if (suppressed.has(email)) {
+          skippedSuppressed++;
           continue;
         }
 
