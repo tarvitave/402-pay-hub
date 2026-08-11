@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 interface InviteRequest {
-  action: "get-lists" | "create-list" | "delete-list" | "list-invites" | "upload" | "send" | "pause" | "resume" | "pause-list" | "resume-list" | "remove" | "status" | "get-settings" | "update-settings" | "dedupe-all" | "clean-bad-emails";
+  action: "get-lists" | "create-list" | "delete-list" | "list-invites" | "upload" | "send" | "pause" | "resume" | "pause-list" | "resume-list" | "remove" | "status" | "get-settings" | "update-settings" | "dedupe-all" | "clean-bad-emails" | "check-email-servers";
   listId?: string;
   name?: string;
   description?: string;
@@ -124,6 +124,40 @@ const handler = async (req: Request): Promise<Response> => {
 
       return new Response(
         JSON.stringify({ success: true, scanned: rows.length, unique: keepers.size, removed }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Dry run: list reachable email servers (no changes made)
+    if (action === "check-email-servers") {
+      const accountToken = Deno.env.get("POSTMARK_ACCOUNT_API_TOKEN");
+      if (!accountToken) {
+        return new Response(
+          JSON.stringify({ usedAccountToken: false, servers: [] }),
+          { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+      const names: string[] = [];
+      let sOffset = 0;
+      while (true) {
+        const res = await fetch(`https://api.postmarkapp.com/servers?count=50&offset=${sOffset}`, {
+          headers: { Accept: "application/json", "X-Postmark-Account-Token": accountToken },
+        });
+        if (!res.ok) {
+          console.error("Postmark servers list failed:", res.status, await res.text());
+          return new Response(
+            JSON.stringify({ usedAccountToken: true, error: "Account token rejected", status: res.status }),
+            { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+          );
+        }
+        const json = await res.json();
+        const servers = json.Servers || [];
+        for (const s of servers) names.push(s.Name);
+        if (servers.length < 50) break;
+        sOffset += 50;
+      }
+      return new Response(
+        JSON.stringify({ usedAccountToken: true, count: names.length, servers: names }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
