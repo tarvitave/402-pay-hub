@@ -52,6 +52,21 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Validate against the suppression list (bounces / spam complaints)
+    const { data: suppressed } = await supabase
+      .from("email_suppressions")
+      .select("id")
+      .eq("email", normalizedEmail)
+      .maybeSingle();
+
+    if (suppressed) {
+      console.log("Blocked suppressed address");
+      return new Response(
+        JSON.stringify({ error: "This email address can't receive our emails. Please use another address." }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     // Check if email already exists
     const { data: existingSubscriber, error: checkError } = await supabase
       .from("subscribers")
