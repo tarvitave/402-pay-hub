@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 interface InviteRequest {
-  action: "get-lists" | "create-list" | "delete-list" | "list-invites" | "upload" | "send" | "pause" | "resume" | "pause-list" | "resume-list" | "remove" | "status" | "get-settings" | "update-settings" | "dedupe-all" | "clean-bad-emails";
+  action: "get-lists" | "create-list" | "delete-list" | "list-invites" | "upload" | "send" | "pause" | "resume" | "pause-list" | "resume-list" | "remove" | "status" | "get-settings" | "update-settings" | "dedupe-all" | "clean-bad-emails" | "check-email-servers";
   listId?: string;
   name?: string;
   description?: string;
