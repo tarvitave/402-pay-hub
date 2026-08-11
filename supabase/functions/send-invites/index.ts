@@ -552,10 +552,11 @@ const handler = async (req: Request): Promise<Response> => {
         JSON.stringify({
           success: true,
           added: totalInserted,
-          skipped: skippedInvalid + skippedDuplicate,
+          skipped: skippedInvalid + skippedDuplicate + skippedSuppressed,
           details: {
             invalid: skippedInvalid,
             duplicate: skippedDuplicate,
+            suppressed: skippedSuppressed,
             existingSubscribers: existingSubscribers.size,
             existingInvites: existingInvites.size,
           },
