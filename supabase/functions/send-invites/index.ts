@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 interface InviteRequest {
-  action: "get-lists" | "create-list" | "delete-list" | "list-invites" | "upload" | "send" | "pause" | "resume" | "pause-list" | "resume-list" | "remove" | "status" | "get-settings" | "update-settings" | "dedupe-all" | "clean-bad-emails" | "check-email-servers";
+  action: "get-lists" | "create-list" | "delete-list" | "list-invites" | "upload" | "send" | "pause" | "resume" | "pause-list" | "resume-list" | "remove" | "status" | "get-settings" | "update-settings" | "dedupe-all" | "clean-bad-emails" | "check-email-servers" | "suppression-stats";
   listId?: string;
   name?: string;
   description?: string;
@@ -22,6 +22,28 @@ interface InviteRequest {
 const EMAILS_PER_INVOCATION = 5;
 const BATCH_SIZE = 500;
 const PAGE_SIZE = 1000;
+
+// Helper to fetch all emails from a table with pagination
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function fetchSuppressed(supabase: any): Promise<Set<string>> {
+  const emails = new Set<string>();
+  let offset = 0;
+  while (true) {
+    const { data, error } = await supabase
+      .from("email_suppressions")
+      .select("email")
+      .range(offset, offset + PAGE_SIZE - 1);
+    if (error) {
+      console.error("suppression fetch error:", error);
+      break;
+    }
+    if (!data || data.length === 0) break;
+    for (const row of data) emails.add(String(row.email).toLowerCase().trim());
+    if (data.length < PAGE_SIZE) break;
+    offset += PAGE_SIZE;
+  }
+  return emails;
+}
 
 // Helper to fetch all emails from a table with pagination
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
