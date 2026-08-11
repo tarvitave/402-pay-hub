@@ -646,8 +646,30 @@ const handler = async (req: Request): Promise<Response> => {
       const subscribeUrl = "https://x402info.com/#newsletter";
       let sent = 0;
       let failed = 0;
+      let suppressedSkipped = 0;
+
+      // Validate this batch against the suppression table before sending
+      const batchEmails = pendingContacts.map((c: { email: string }) => String(c.email).toLowerCase().trim());
+      const { data: suppressedRows, error: suppressedError } = await supabase
+        .from("email_suppressions")
+        .select("email")
+        .in("email", batchEmails);
+      if (suppressedError) console.error("suppression check error:", suppressedError);
+      const suppressedSet = new Set(
+        (suppressedRows || []).map((r: { email: string }) => String(r.email).toLowerCase().trim())
+      );
 
       for (const contact of pendingContacts) {
+        if (suppressedSet.has(String(contact.email).toLowerCase().trim())) {
+          console.log(`Skipping suppressed address: ${contact.email}`);
+          await supabase
+            .from("email_invites")
+            .update({ status: "suppressed" })
+            .eq("id", contact.id);
+          suppressedSkipped++;
+          continue;
+        }
+
         const personalizedTemplate = emailTemplate
           .replace(/\{\{name\}\}/g, contact.name || "there")
           .replace(/\{\{subscribe_url\}\}/g, subscribeUrl);
@@ -704,10 +726,10 @@ const handler = async (req: Request): Promise<Response> => {
         }
       }
 
-      console.log(`Completed: sent ${sent}, failed ${failed}`);
+      console.log(`Completed: sent ${sent}, failed ${failed}, suppressed ${suppressedSkipped}`);
 
       return new Response(
-        JSON.stringify({ success: true, sent, failed }),
+        JSON.stringify({ success: true, sent, failed, suppressed: suppressedSkipped }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
