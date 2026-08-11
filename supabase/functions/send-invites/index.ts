@@ -253,9 +253,27 @@ const handler = async (req: Request): Promise<Response> => {
       const all = Array.from(badEmails);
       let removedInvites = 0;
       let unsubscribed = 0;
+      let suppressedStored = 0;
 
       for (let i = 0; i < all.length; i += BATCH_SIZE) {
         const chunk = all.slice(i, i + BATCH_SIZE);
+
+        // Remember them permanently in the suppression table
+        const { data: stored, error: supError } = await supabase
+          .from("email_suppressions")
+          .upsert(
+            chunk.map((email) => ({
+              email,
+              reason: "bounce",
+              source: "postmark",
+              last_seen_at: new Date().toISOString(),
+            })),
+            { onConflict: "email" }
+          )
+          .select("id");
+        if (supError) console.error("suppression upsert error:", supError);
+        else suppressedStored += stored?.length || 0;
+
         const { data: deleted, error } = await supabase
           .from("email_invites")
           .delete()
@@ -282,6 +300,7 @@ const handler = async (req: Request): Promise<Response> => {
           badEmails: all.length,
           removedInvites,
           unsubscribed,
+          suppressedStored,
           perServer,
         }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
