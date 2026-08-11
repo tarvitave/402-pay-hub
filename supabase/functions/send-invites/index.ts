@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 interface InviteRequest {
-  action: "get-lists" | "create-list" | "delete-list" | "list-invites" | "upload" | "send" | "pause" | "resume" | "pause-list" | "resume-list" | "remove" | "status" | "get-settings" | "update-settings";
+  action: "get-lists" | "create-list" | "delete-list" | "list-invites" | "upload" | "send" | "pause" | "resume" | "pause-list" | "resume-list" | "remove" | "status" | "get-settings" | "update-settings" | "dedupe-all" | "clean-bad-emails";
   listId?: string;
   name?: string;
   description?: string;
@@ -68,6 +68,191 @@ const handler = async (req: Request): Promise<Response> => {
 
     const body: InviteRequest = await req.json();
     const { action } = body;
+
+    // Deduplicate emails across ALL mailing lists (keep one row per email)
+    if (action === "dedupe-all") {
+      const rows: Array<{ id: string; email: string; status: string | null; created_at: string | null }> = [];
+      let offset = 0;
+      while (true) {
+        const { data: batch, error } = await supabase
+          .from("email_invites")
+          .select("id, email, status, created_at")
+          .order("created_at", { ascending: true })
+          .range(offset, offset + PAGE_SIZE - 1);
+        if (error) {
+          console.error("dedupe fetch error:", error);
+          return new Response(
+            JSON.stringify({ error: "Failed to read invites" }),
+            { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+          );
+        }
+        if (!batch || batch.length === 0) break;
+        rows.push(...batch);
+        if (batch.length < PAGE_SIZE) break;
+        offset += PAGE_SIZE;
+      }
+
+      const rank = (status: string | null) => (status === "sent" ? 3 : status === "pending" ? 2 : 1);
+      const keepers = new Map<string, { id: string; status: string | null }>();
+      const toDelete: string[] = [];
+
+      for (const row of rows) {
+        const key = (row.email || "").toLowerCase().trim();
+        if (!key) continue;
+        const current = keepers.get(key);
+        if (!current) {
+          keepers.set(key, { id: row.id, status: row.status });
+          continue;
+        }
+        if (rank(row.status) > rank(current.status)) {
+          toDelete.push(current.id);
+          keepers.set(key, { id: row.id, status: row.status });
+        } else {
+          toDelete.push(row.id);
+        }
+      }
+
+      let removed = 0;
+      for (let i = 0; i < toDelete.length; i += BATCH_SIZE) {
+        const chunk = toDelete.slice(i, i + BATCH_SIZE);
+        const { error } = await supabase.from("email_invites").delete().in("id", chunk);
+        if (error) console.error("dedupe delete error:", error);
+        else removed += chunk.length;
+      }
+
+      console.log(`Dedupe complete: scanned ${rows.length}, unique ${keepers.size}, removed ${removed}`);
+
+      return new Response(
+        JSON.stringify({ success: true, scanned: rows.length, unique: keepers.size, removed }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Pull bad/spam addresses from Postmark (all servers when an account token is set) and remove them
+    if (action === "clean-bad-emails") {
+      const accountToken = Deno.env.get("POSTMARK_ACCOUNT_API_TOKEN");
+      const serverToken = Deno.env.get("POSTMARK_API_KEY");
+
+      const serverTokens: Array<{ name: string; token: string }> = [];
+
+      if (accountToken) {
+        let sOffset = 0;
+        while (true) {
+          const res = await fetch(`https://api.postmarkapp.com/servers?count=50&offset=${sOffset}`, {
+            headers: { Accept: "application/json", "X-Postmark-Account-Token": accountToken },
+          });
+          if (!res.ok) {
+            console.error("Postmark servers list failed:", res.status, await res.text());
+            break;
+          }
+          const json = await res.json();
+          const servers = json.Servers || [];
+          for (const s of servers) {
+            const token = (s.ApiTokens && s.ApiTokens[0]) || null;
+            if (token) serverTokens.push({ name: s.Name, token });
+          }
+          if (servers.length < 50) break;
+          sOffset += 50;
+        }
+      }
+
+      if (serverTokens.length === 0 && serverToken) {
+        serverTokens.push({ name: "default", token: serverToken });
+      }
+
+      if (serverTokens.length === 0) {
+        return new Response(
+          JSON.stringify({ error: "No Postmark credentials configured" }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      const badEmails = new Set<string>();
+      const perServer: Array<{ server: string; found: number }> = [];
+
+      for (const { name, token } of serverTokens) {
+        const before = badEmails.size;
+        const headers = { Accept: "application/json", "X-Postmark-Server-Token": token };
+
+        // Hard bounces / spam complaints / inactive recipients
+        let bOffset = 0;
+        while (bOffset < 5000) {
+          const res = await fetch(
+            `https://api.postmarkapp.com/bounces?count=500&offset=${bOffset}&inactive=true`,
+            { headers }
+          );
+          if (!res.ok) {
+            console.error(`Bounces failed for ${name}:`, res.status, await res.text());
+            break;
+          }
+          const json = await res.json();
+          const bounces = json.Bounces || [];
+          for (const b of bounces) {
+            if (b.Email) badEmails.add(String(b.Email).toLowerCase().trim());
+          }
+          if (bounces.length < 500) break;
+          bOffset += 500;
+        }
+
+        // Suppression lists per message stream
+        for (const stream of ["outbound", "broadcast"]) {
+          const res = await fetch(
+            `https://api.postmarkapp.com/message-streams/${stream}/suppressions/dump`,
+            { headers }
+          );
+          if (!res.ok) {
+            console.error(`Suppressions failed for ${name}/${stream}:`, res.status);
+            continue;
+          }
+          const json = await res.json();
+          for (const s of json.Suppressions || []) {
+            if (s.EmailAddress) badEmails.add(String(s.EmailAddress).toLowerCase().trim());
+          }
+        }
+
+        perServer.push({ server: name, found: badEmails.size - before });
+      }
+
+      console.log(`Collected ${badEmails.size} bad addresses from ${serverTokens.length} server(s)`);
+
+      // Remove them from mailing lists (and unsubscribe any matching subscribers)
+      const all = Array.from(badEmails);
+      let removedInvites = 0;
+      let unsubscribed = 0;
+
+      for (let i = 0; i < all.length; i += BATCH_SIZE) {
+        const chunk = all.slice(i, i + BATCH_SIZE);
+        const { data: deleted, error } = await supabase
+          .from("email_invites")
+          .delete()
+          .in("email", chunk)
+          .select("id");
+        if (error) console.error("bad-email delete error:", error);
+        else removedInvites += deleted?.length || 0;
+
+        const { data: unsub, error: unsubError } = await supabase
+          .from("subscribers")
+          .update({ unsubscribed_at: new Date().toISOString() })
+          .in("email", chunk)
+          .is("unsubscribed_at", null)
+          .select("id");
+        if (unsubError) console.error("bad-email unsubscribe error:", unsubError);
+        else unsubscribed += unsub?.length || 0;
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          servers: serverTokens.length,
+          usedAccountToken: !!accountToken,
+          badEmails: all.length,
+          removedInvites,
+          unsubscribed,
+          perServer,
+        }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     // Get all mailing lists with stats
     if (action === "get-lists") {
