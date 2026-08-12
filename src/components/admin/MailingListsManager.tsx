@@ -711,6 +711,9 @@ export default function MailingListsManager() {
                   </div>
                   <div className="flex items-center gap-2">
                     {list.paused && <Badge variant="outline" className="text-amber-600 border-amber-600">Paused</Badge>}
+                    <Badge variant="outline">
+                      {(list.stats.pending + list.stats.sent + list.stats.failed).toLocaleString()} emails
+                    </Badge>
                     <Badge variant="secondary">{list.stats.pending} pending</Badge>
                     <Badge variant="default">{list.stats.sent} sent</Badge>
                     {list.stats.failed > 0 && <Badge variant="destructive">{list.stats.failed} failed</Badge>}
