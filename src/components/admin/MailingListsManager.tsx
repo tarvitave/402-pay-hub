@@ -94,7 +94,7 @@ export default function MailingListsManager() {
     }
 
     const listSize = (l: MailingList) =>
-      (l.counts?.pending || 0) + (l.counts?.sent || 0) + (l.counts?.failed || 0);
+      (l.stats?.pending || 0) + (l.stats?.sent || 0) + (l.stats?.failed || 0);
     const existingByName = new Map(lists.map((l) => [l.name.trim().toLowerCase(), l]));
     const importedNames = new Set<string>();
 
