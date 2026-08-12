@@ -64,7 +64,9 @@ export default function MailingListsManager() {
   const [isCleaning, setIsCleaning] = useState(false);
   const [emailServers, setEmailServers] = useState<string[] | null>(null);
   const [suppressedCount, setSuppressedCount] = useState<number | null>(null);
-  const [sortBy, setSortBy] = useState<"created_desc" | "created_asc" | "name_asc" | "name_desc">("created_desc");
+  const [sortBy, setSortBy] = useState<
+    "created_desc" | "created_asc" | "name_asc" | "name_desc" | "size_desc" | "size_asc"
+  >("created_desc");
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const dropInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -454,6 +456,7 @@ export default function MailingListsManager() {
   };
 
   const sortedLists = [...lists].sort((a, b) => {
+    const sizeOf = (l: MailingList) => l.stats.pending + l.stats.sent + l.stats.failed;
     switch (sortBy) {
       case "name_asc":
         return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
@@ -461,6 +464,10 @@ export default function MailingListsManager() {
         return b.name.localeCompare(a.name, undefined, { sensitivity: "base" });
       case "created_asc":
         return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      case "size_desc":
+        return sizeOf(b) - sizeOf(a);
+      case "size_asc":
+        return sizeOf(a) - sizeOf(b);
       default:
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     }
@@ -688,6 +695,8 @@ export default function MailingListsManager() {
                 <option value="created_asc">Oldest first</option>
                 <option value="name_asc">Name (A–Z)</option>
                 <option value="name_desc">Name (Z–A)</option>
+                <option value="size_desc">Most subscribers</option>
+                <option value="size_asc">Fewest subscribers</option>
               </select>
             </div>
           </div>
