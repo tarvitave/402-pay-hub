@@ -93,15 +93,21 @@ export default function MailingListsManager() {
       return;
     }
 
-    const existingNames = new Set(lists.map((l) => l.name.trim().toLowerCase()));
+    const listSize = (l: MailingList) =>
+      (l.counts?.pending || 0) + (l.counts?.sent || 0) + (l.counts?.failed || 0);
+    const existingByName = new Map(lists.map((l) => [l.name.trim().toLowerCase(), l]));
+    const importedNames = new Set<string>();
 
     for (const file of csvFiles) {
       const listName = file.name;
-      if (existingNames.has(listName.trim().toLowerCase())) {
+      const key = listName.trim().toLowerCase();
+      const existing = existingByName.get(key);
+      const isEmptyExisting = existing ? listSize(existing) === 0 : false;
+      if (importedNames.has(key) || (existing && !isEmptyExisting)) {
         toast.info(`"${listName}" was already imported — skipped`);
         continue;
       }
-      existingNames.add(listName.trim().toLowerCase());
+      importedNames.add(key);
       setDropStatus(`Importing "${listName}"...`);
       try {
         const contacts = parseContacts(await file.text());
@@ -110,12 +116,14 @@ export default function MailingListsManager() {
           continue;
         }
 
-        const created = await supabase.functions.invoke("send-invites", {
-          body: { action: "create-list", name: listName, description: `Imported from ${file.name}` },
-        });
-        if (created.error) throw created.error;
-
-        const listId = created.data?.id;
+        let listId = existing?.id;
+        if (!listId) {
+          const created = await supabase.functions.invoke("send-invites", {
+            body: { action: "create-list", name: listName, description: `Imported from ${file.name}` },
+          });
+          if (created.error) throw created.error;
+          listId = created.data?.id;
+        }
         const uploaded = await supabase.functions.invoke("send-invites", {
           body: { action: "upload", contacts, listId },
         });
