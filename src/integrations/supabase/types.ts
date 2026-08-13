@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      client_errors: {
+        Row: {
+          created_at: string
+          error_type: string
+          id: string
+          message: string
+          page_path: string | null
+          stack: string | null
+          user_agent: string | null
+          visitor_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_type?: string
+          id?: string
+          message: string
+          page_path?: string | null
+          stack?: string | null
+          user_agent?: string | null
+          visitor_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_type?: string
+          id?: string
+          message?: string
+          page_path?: string | null
+          stack?: string | null
+          user_agent?: string | null
+          visitor_id?: string | null
+        }
+        Relationships: []
+      }
       ecosystem_submissions: {
         Row: {
           category: string
@@ -313,20 +346,26 @@ export type Database = {
       page_views: {
         Row: {
           created_at: string | null
+          duration_seconds: number | null
           id: string
           page_path: string
+          referrer: string | null
           visitor_id: string
         }
         Insert: {
           created_at?: string | null
+          duration_seconds?: number | null
           id?: string
           page_path: string
+          referrer?: string | null
           visitor_id: string
         }
         Update: {
           created_at?: string | null
+          duration_seconds?: number | null
           id?: string
           page_path?: string
+          referrer?: string | null
           visitor_id?: string
         }
         Relationships: []
@@ -394,6 +433,36 @@ export type Database = {
           id?: string
           subscribed_at?: string
           unsubscribed_at?: string | null
+        }
+        Relationships: []
+      }
+      user_actions: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          label: string | null
+          metadata: Json | null
+          page_path: string | null
+          visitor_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          metadata?: Json | null
+          page_path?: string | null
+          visitor_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          metadata?: Json | null
+          page_path?: string | null
+          visitor_id?: string | null
         }
         Relationships: []
       }

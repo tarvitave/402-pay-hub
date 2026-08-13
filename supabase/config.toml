@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.submit-ecosystem-project]
 verify_jwt = false
+
+[functions.daily-watchdog]
+verify_jwt = false

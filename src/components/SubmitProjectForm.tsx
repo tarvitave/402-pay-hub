@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Send, CheckCircle2 } from "lucide-react";
 import { z } from "zod";
+import { trackAction, trackError } from "@/hooks/usePageTracking";
 
 const schema = z.object({
   projectName: z.string().trim().min(2).max(120),
@@ -48,8 +49,10 @@ const SubmitProjectForm = () => {
       });
       if (error) throw error;
       setSubmitted(true);
+      trackAction("submit_ecosystem_project", parsed.data.projectName, { category: parsed.data.category });
       toast({ title: "Submission received", description: "We'll review and get back to you." });
     } catch (err: any) {
+      trackError(`Project submission failed: ${err?.message ?? "unknown"}`, undefined, "submission-error");
       toast({
         title: "Submission failed",
         description: "Please try again later.",

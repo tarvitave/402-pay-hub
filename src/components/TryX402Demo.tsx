@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { trackAction } from "@/hooks/usePageTracking";
 import { Loader2, Lock, CheckCircle2, RefreshCw, Wallet } from "lucide-react";
 
 type Step = "idle" | "requesting" | "challenged" | "paying" | "verified" | "delivered";
@@ -23,6 +24,7 @@ const TryX402Demo = () => {
 
   const run = async () => {
     reset();
+    trackAction("run_x402_demo");
     setStep("requesting");
     append("→ GET /api/fact");
     await wait(550);

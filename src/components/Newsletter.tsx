@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Mail, ArrowRight, CheckCircle, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { trackAction, trackError } from "@/hooks/usePageTracking";
 
 const Newsletter = () => {
   const [email, setEmail] = useState("");
@@ -25,12 +26,14 @@ const Newsletter = () => {
 
       setIsSubmitted(true);
       setEmail("");
+      trackAction("newsletter_subscribe", "homepage form");
       toast({
         title: "Subscribed!",
         description: "Check your inbox for a welcome email.",
       });
     } catch (error: any) {
       console.error("Newsletter subscription error:", error);
+      trackError(`Newsletter subscribe failed: ${error?.message ?? "unknown"}`, undefined, "subscribe-error");
       toast({
         title: "Subscription failed",
         description: error.message || "Please try again later.",
