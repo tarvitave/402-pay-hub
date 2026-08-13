@@ -7,10 +7,20 @@ const corsHeaders = {
 };
 
 interface PageViewRequest {
-  action: "track" | "get";
+  action: "track" | "get" | "duration" | "log-error" | "log-action";
   page_path?: string;
   visitor_id?: string;
   days?: number;
+  referrer?: string | null;
+  view_id?: string;
+  duration_seconds?: number;
+  message?: string;
+  stack?: string;
+  error_type?: string;
+  user_agent?: string;
+  user_action?: string;
+  label?: string;
+  metadata?: Record<string, unknown>;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -23,7 +33,8 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { action, page_path, visitor_id, days = 30 }: PageViewRequest = await req.json();
+    const body: PageViewRequest = await req.json();
+    const { action, page_path, visitor_id, days = 30 } = body;
 
     // Track a page view
     if (action === "track") {
@@ -34,9 +45,11 @@ const handler = async (req: Request): Promise<Response> => {
         );
       }
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("page_views")
-        .insert({ page_path, visitor_id });
+        .insert({ page_path, visitor_id, referrer: body.referrer ?? null })
+        .select("id")
+        .single();
 
       if (error) {
         console.error("Error tracking page view:", error);
@@ -47,9 +60,77 @@ const handler = async (req: Request): Promise<Response> => {
       }
 
       return new Response(
-        JSON.stringify({ success: true }),
+        JSON.stringify({ success: true, id: data?.id ?? null }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
+    }
+
+    // Record how long a visitor stayed on a page
+    if (action === "duration") {
+      const seconds = Number(body.duration_seconds);
+      if (!body.view_id || !Number.isFinite(seconds) || seconds < 0 || seconds > 86400) {
+        return new Response(
+          JSON.stringify({ error: "view_id and a valid duration_seconds are required" }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      await supabase
+        .from("page_views")
+        .update({ duration_seconds: Math.round(seconds) })
+        .eq("id", body.view_id);
+
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    // Log a client-side error
+    if (action === "log-error") {
+      if (!body.message) {
+        return new Response(JSON.stringify({ error: "message is required" }), {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+
+      await supabase.from("client_errors").insert({
+        visitor_id: visitor_id ?? null,
+        page_path: page_path?.slice(0, 500) ?? null,
+        error_type: (body.error_type ?? "error").slice(0, 60),
+        message: body.message.slice(0, 2000),
+        stack: body.stack?.slice(0, 5000) ?? null,
+        user_agent: body.user_agent?.slice(0, 500) ?? null,
+      });
+
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    // Log a user action
+    if (action === "log-action") {
+      if (!body.user_action) {
+        return new Response(JSON.stringify({ error: "user_action is required" }), {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+
+      await supabase.from("user_actions").insert({
+        visitor_id: visitor_id ?? null,
+        page_path: page_path?.slice(0, 500) ?? null,
+        action: body.user_action.slice(0, 120),
+        label: body.label?.slice(0, 300) ?? null,
+        metadata: body.metadata ?? null,
+      });
+
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
     }
 
     // Get analytics — use RPC / raw SQL to aggregate server-side and avoid the 1000-row limit
