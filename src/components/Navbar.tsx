@@ -17,6 +17,7 @@ const Navbar = () => {
     { href: "/protocols", label: "Protocols" },
     { href: "/glossary", label: "Glossary" },
     { href: "/newsletters", label: "Newsletters" },
+    { href: "/blog", label: "Blog" },
     { href: "/resources", label: "Resources" },
   ];
 
