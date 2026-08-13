@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-import { RefreshCw, Mail, Users, MousePointer, AlertTriangle, CheckCircle, BarChart3, Eye, Send, FileText, List, Newspaper } from "lucide-react";
+import { RefreshCw, Mail, Users, MousePointer, AlertTriangle, CheckCircle, BarChart3, Eye, Send, FileText, List, Newspaper, Share2 } from "lucide-react";
  import { Search } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { toast } from "sonner";
