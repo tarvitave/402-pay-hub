@@ -23,6 +23,7 @@ const TryX402Demo = () => {
 
   const run = async () => {
     reset();
+    trackAction("run_x402_demo");
     setStep("requesting");
     append("→ GET /api/fact");
     await wait(550);
