@@ -22,6 +22,8 @@ import UseCases from "./pages/UseCases";
 import Glossary from "./pages/Glossary";
 import Comparisons from "./pages/Comparisons";
 import CompareDetail from "./pages/CompareDetail";
+import Registry from "./pages/Registry";
+import Validator from "./pages/Validator";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,6 +53,8 @@ const App = () => (
           <Route path="/glossary" element={<Glossary />} />
           <Route path="/compare" element={<Comparisons />} />
           <Route path="/compare/:slug" element={<CompareDetail />} />
+          <Route path="/registry" element={<Registry />} />
+          <Route path="/validator" element={<Validator />} />
           <Route path="/terms" element={<TermsOfService />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
