@@ -65,10 +65,29 @@ serve(async (req: Request): Promise<Response> => {
       headers[k] = v.slice(0, 400);
     });
 
+    // x402 v2 can carry the challenge in a base64 `payment-required` header
+    // instead of (or as well as) the JSON body.
+    let headerChallenge: Record<string, unknown> | null = null;
+    const rawChallenge = res.headers.get("payment-required") ?? res.headers.get("x-payment-required");
+    if (rawChallenge) {
+      try {
+        headerChallenge = JSON.parse(atob(rawChallenge));
+      } catch {
+        try {
+          headerChallenge = JSON.parse(rawChallenge);
+        } catch {
+          headerChallenge = null;
+        }
+      }
+    }
+
+    const challenge: Record<string, unknown> | null =
+      (parsed && (parsed.accepts || parsed.x402Version) ? parsed : null) ?? headerChallenge ?? parsed;
+
     const wwwAuth = headers["www-authenticate"] ?? "";
     const accepts =
-      (parsed?.accepts as unknown[] | undefined) ??
-      ((parsed?.paymentRequirements as unknown[] | undefined) ?? undefined);
+      (challenge?.accepts as unknown[] | undefined) ??
+      ((challenge?.paymentRequirements as unknown[] | undefined) ?? undefined);
     const firstAccept = (Array.isArray(accepts) ? accepts[0] : undefined) as
       | Record<string, unknown>
       | undefined;
@@ -80,9 +99,13 @@ serve(async (req: Request): Promise<Response> => {
         detail: `Got HTTP ${res.status}`,
       },
       {
-        label: "Machine-readable JSON body",
-        pass: !!parsed,
-        detail: parsed ? "Valid JSON payload returned" : "Body was not valid JSON",
+        label: "Machine-readable challenge (JSON body or payment-required header)",
+        pass: !!challenge,
+        detail: headerChallenge
+          ? "Challenge decoded from the payment-required header"
+          : parsed
+          ? "Valid JSON payload returned"
+          : "No machine-readable challenge found",
       },
       {
         label: "Declares payment requirements (accepts / paymentRequirements)",
