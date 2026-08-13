@@ -133,8 +133,8 @@ serve(async (req: Request): Promise<Response> => {
       },
       {
         label: "x402 version declared",
-        pass: !!(parsed?.x402Version ?? parsed?.version),
-        detail: String(parsed?.x402Version ?? parsed?.version ?? "x402Version missing"),
+        pass: !!(challenge?.x402Version ?? challenge?.version),
+        detail: String(challenge?.x402Version ?? challenge?.version ?? "x402Version missing"),
       },
       {
         label: "CORS enabled for browser clients",
