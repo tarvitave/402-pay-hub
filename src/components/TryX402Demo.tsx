@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { trackAction } from "@/hooks/usePageTracking";
 import { Loader2, Lock, CheckCircle2, RefreshCw, Wallet } from "lucide-react";
 
 type Step = "idle" | "requesting" | "challenged" | "paying" | "verified" | "delivered";
