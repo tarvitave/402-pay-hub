@@ -32,3 +32,12 @@ verify_jwt = false
 
 [functions.daily-watchdog]
 verify_jwt = false
+
+[functions.registry]
+verify_jwt = false
+
+[functions.validate-402]
+verify_jwt = false
+
+[functions.social-queue]
+verify_jwt = false

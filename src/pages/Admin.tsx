@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-import { RefreshCw, Mail, Users, MousePointer, AlertTriangle, CheckCircle, BarChart3, Eye, Send, FileText, List, Newspaper } from "lucide-react";
+import { RefreshCw, Mail, Users, MousePointer, AlertTriangle, CheckCircle, BarChart3, Eye, Send, FileText, List, Newspaper, Share2 } from "lucide-react";
  import { Search } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ import Footer from "@/components/Footer";
 import MailingListsManager from "@/components/admin/MailingListsManager";
 import NewsletterEditor from "@/components/admin/NewsletterEditor";
  import SeoAnalyzer from "@/components/admin/SeoAnalyzer";
+import SocialManager from "@/components/admin/SocialManager";
 import {
   Pagination,
   PaginationContent,
@@ -179,7 +180,7 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="analytics" className="space-y-6">
-          <TabsList className="grid w-full max-w-4xl grid-cols-7">
+          <TabsList className="grid w-full max-w-5xl grid-cols-8">
             <TabsTrigger value="analytics" className="flex items-center gap-1 text-xs">
               <BarChart3 className="h-4 w-4" />
               <span className="hidden sm:inline">Analytics</span>
@@ -208,6 +209,10 @@ const Admin = () => {
                <Search className="h-4 w-4" />
                <span className="hidden sm:inline">SEO</span>
              </TabsTrigger>
+            <TabsTrigger value="social" className="flex items-center gap-1 text-xs">
+              <Share2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Social</span>
+            </TabsTrigger>
           </TabsList>
 
           {/* Analytics Tab */}
@@ -453,6 +458,11 @@ const Admin = () => {
            <TabsContent value="seo">
              <SeoAnalyzer />
            </TabsContent>
+
+          {/* Social Tab */}
+          <TabsContent value="social">
+            <SocialManager />
+          </TabsContent>
         </Tabs>
       </main>
 

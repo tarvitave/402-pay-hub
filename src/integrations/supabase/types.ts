@@ -208,6 +208,50 @@ export type Database = {
         }
         Relationships: []
       }
+      endpoint_health_checks: {
+        Row: {
+          created_at: string
+          endpoint_id: string
+          error: string | null
+          id: string
+          is_402: boolean
+          latency_ms: number | null
+          ok: boolean
+          payment_header: string | null
+          status_code: number | null
+        }
+        Insert: {
+          created_at?: string
+          endpoint_id: string
+          error?: string | null
+          id?: string
+          is_402?: boolean
+          latency_ms?: number | null
+          ok?: boolean
+          payment_header?: string | null
+          status_code?: number | null
+        }
+        Update: {
+          created_at?: string
+          endpoint_id?: string
+          error?: string | null
+          id?: string
+          is_402?: boolean
+          latency_ms?: number | null
+          ok?: boolean
+          payment_header?: string | null
+          status_code?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "endpoint_health_checks_endpoint_id_fkey"
+            columns: ["endpoint_id"]
+            isOneToOne: false
+            referencedRelation: "x402_endpoints"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invite_contacts: {
         Row: {
           created_at: string
@@ -412,6 +456,54 @@ export type Database = {
         }
         Relationships: []
       }
+      social_posts: {
+        Row: {
+          channel: string
+          content: string
+          created_at: string
+          error: string | null
+          external_id: string | null
+          id: string
+          link_url: string | null
+          posted_at: string | null
+          scheduled_for: string | null
+          source: string
+          source_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          channel: string
+          content: string
+          created_at?: string
+          error?: string | null
+          external_id?: string | null
+          id?: string
+          link_url?: string | null
+          posted_at?: string | null
+          scheduled_for?: string | null
+          source?: string
+          source_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          content?: string
+          created_at?: string
+          error?: string | null
+          external_id?: string | null
+          id?: string
+          link_url?: string | null
+          posted_at?: string | null
+          scheduled_for?: string | null
+          source?: string
+          source_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       subscribers: {
         Row: {
           confirmed: boolean | null
@@ -463,6 +555,72 @@ export type Database = {
           metadata?: Json | null
           page_path?: string | null
           visitor_id?: string | null
+        }
+        Relationships: []
+      }
+      x402_endpoints: {
+        Row: {
+          active: boolean
+          approved: boolean
+          category: string
+          created_at: string
+          currency: string | null
+          description: string | null
+          docs_url: string | null
+          id: string
+          last_checked_at: string | null
+          last_latency_ms: number | null
+          last_status: number | null
+          name: string
+          network: string | null
+          price: string | null
+          submitted_by_email: string | null
+          supports_402: boolean | null
+          updated_at: string
+          uptime_24h: number | null
+          url: string
+        }
+        Insert: {
+          active?: boolean
+          approved?: boolean
+          category?: string
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          docs_url?: string | null
+          id?: string
+          last_checked_at?: string | null
+          last_latency_ms?: number | null
+          last_status?: number | null
+          name: string
+          network?: string | null
+          price?: string | null
+          submitted_by_email?: string | null
+          supports_402?: boolean | null
+          updated_at?: string
+          uptime_24h?: number | null
+          url: string
+        }
+        Update: {
+          active?: boolean
+          approved?: boolean
+          category?: string
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          docs_url?: string | null
+          id?: string
+          last_checked_at?: string | null
+          last_latency_ms?: number | null
+          last_status?: number | null
+          name?: string
+          network?: string | null
+          price?: string | null
+          submitted_by_email?: string | null
+          supports_402?: boolean | null
+          updated_at?: string
+          uptime_24h?: number | null
+          url?: string
         }
         Relationships: []
       }
