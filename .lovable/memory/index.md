@@ -1,0 +1,1 @@
+- [Registry, Validator & Social](mem://features/registry-validator-social) — Endpoint registry health checks, 402 validator scoring, AI social autoposting crons
