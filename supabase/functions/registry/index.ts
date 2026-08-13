@@ -24,7 +24,7 @@ async function probe(url: string) {
     const timer = setTimeout(() => controller.abort(), 10000);
     const res = await fetch(url, {
       method: "GET",
-      redirect: "manual",
+      redirect: "follow",
       headers: { "User-Agent": "x402info-registry-healthcheck/1.0" },
       signal: controller.signal,
     });

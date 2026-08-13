@@ -35,7 +35,7 @@ serve(async (req: Request): Promise<Response> => {
     try {
       res = await fetch(url, {
         method: "GET",
-        redirect: "manual",
+        redirect: "follow",
         headers: { "User-Agent": "x402info-validator/1.0", Accept: "application/json, */*" },
         signal: controller.signal,
       });
