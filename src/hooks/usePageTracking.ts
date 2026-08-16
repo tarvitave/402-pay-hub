@@ -31,7 +31,20 @@ export const trackAction = async (action: string, label?: string, metadata?: Rec
   }
 };
 
+// Noise injected by third-party webviews (Outlook/Office link scanners, some
+// extensions) rather than real application errors. Never log these.
+const IGNORED_ERROR_PATTERNS = [
+  /Object Not Found Matching Id/i,
+  /ResizeObserver loop/i,
+  /Non-Error promise rejection captured/i,
+  /^Script error\.?$/i,
+];
+
+const isIgnorableError = (message: string) =>
+  IGNORED_ERROR_PATTERNS.some((pattern) => pattern.test(message));
+
 export const trackError = async (message: string, stack?: string, errorType = 'error') => {
+  if (!message || isIgnorableError(message)) return;
   try {
     await supabase.functions.invoke('page-analytics', {
       body: {

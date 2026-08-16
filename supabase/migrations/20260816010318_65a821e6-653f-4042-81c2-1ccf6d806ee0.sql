@@ -1,0 +1,1 @@
+DELETE FROM public.client_errors WHERE message ILIKE '%Object Not Found Matching Id%' OR message ILIKE '%ResizeObserver loop%' OR message ~* '^Script error\.?$';
