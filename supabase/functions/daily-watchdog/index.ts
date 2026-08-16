@@ -169,9 +169,15 @@ const handler = async (req: Request): Promise<Response> => {
       .map(([host, count]) => [host, count]);
 
     // --- Errors ---
+    const IGNORED_ERRORS = [
+      /Object Not Found Matching Id/i,
+      /ResizeObserver loop/i,
+      /^Script error\.?$/i,
+    ];
     const errCounts = new Map<string, { count: number; pages: Set<string>; type: string }>();
     for (const e of errors) {
       const key = String(e.message || "").slice(0, 200);
+      if (!key || IGNORED_ERRORS.some((p) => p.test(key))) continue;
       const entry = errCounts.get(key) ?? { count: 0, pages: new Set<string>(), type: String(e.error_type || "error") };
       entry.count++;
       entry.pages.add(String(e.page_path || "—"));
