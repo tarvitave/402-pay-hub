@@ -95,6 +95,21 @@ const handler = async (req: Request): Promise<Response> => {
         });
       }
 
+      // Noise from third-party webviews (Outlook/Office link scanners, extensions),
+      // not real application errors. Drop server-side so stale clients can't log it.
+      const IGNORED_ERROR_PATTERNS = [
+        /Object Not Found Matching Id/i,
+        /ResizeObserver loop/i,
+        /Non-Error promise rejection captured/i,
+        /^Script error\.?$/i,
+      ];
+      if (IGNORED_ERROR_PATTERNS.some((p) => p.test(body.message))) {
+        return new Response(JSON.stringify({ success: true, ignored: true }), {
+          status: 200,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+
       await supabase.from("client_errors").insert({
         visitor_id: visitor_id ?? null,
         page_path: page_path?.slice(0, 500) ?? null,
