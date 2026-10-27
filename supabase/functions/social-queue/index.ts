@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { generateJSON } from "../_shared/ai.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -21,9 +22,6 @@ interface GeneratedPost {
 }
 
 async function generatePosts(supabase: ReturnType<typeof createClient>) {
-  const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
-  if (!lovableApiKey) throw new Error("AI key not configured");
-
   const { data: newsletters } = await supabase
     .from("newsletters")
     .select("slug, title, excerpt, content, date")
@@ -50,7 +48,7 @@ async function generatePosts(supabase: ReturnType<typeof createClient>) {
   const systemPrompt = `You write social media posts for x402info.com, the independent hub for the x402 HTTP-402 micropayment protocol (AI agent payments, API monetization, stablecoin settlement on Base/Solana).
 
 Voice: sharp, technical, no hype, no emoji spam (max one emoji), no hashtags on LinkedIn, max 2 hashtags on X.
-Return ONLY valid JSON, no markdown fences, in this shape:
+Return JSON in this shape:
 {"posts":[{"channel":"x","content":"...","link_url":"https://..."}]}
 Channels allowed: "x" (max 260 chars including nothing else) and "linkedin" (max 900 chars, 2-4 short paragraphs).`;
 
@@ -61,32 +59,31 @@ Every post must include a link_url pointing to a real page on ${SITE} (newslette
 SOURCE MATERIAL:
 ${context}`;
 
-  const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${lovableApiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-    }),
+  const parsed = await generateJSON<{ posts?: GeneratedPost[] }>({
+    system: systemPrompt,
+    user: userPrompt,
+    maxTokens: 16000,
+    jsonSchema: {
+      type: "object",
+      properties: {
+        posts: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              channel: { type: "string", enum: ["x", "linkedin"] },
+              content: { type: "string" },
+              link_url: { type: "string" },
+            },
+            required: ["channel", "content", "link_url"],
+            additionalProperties: false,
+          },
+        },
+      },
+      required: ["posts"],
+      additionalProperties: false,
+    },
   });
-
-  if (!aiRes.ok) {
-    console.error("AI gateway error", aiRes.status, await aiRes.text());
-    throw new Error("AI generation failed");
-  }
-
-  const aiJson = await aiRes.json();
-  const raw = String(aiJson.choices?.[0]?.message?.content ?? "").replace(/```json|```/g, "").trim();
-  let parsed: { posts?: GeneratedPost[] };
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    const match = raw.match(/\{[\s\S]*\}/);
-    parsed = match ? JSON.parse(match[0]) : { posts: [] };
-  }
 
   const posts = (parsed.posts ?? [])
     .filter((p) => p?.content && (p.channel === "x" || p.channel === "linkedin"))

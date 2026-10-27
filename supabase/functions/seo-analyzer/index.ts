@@ -1,5 +1,6 @@
  import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+ import { generateJSON, aiClient } from "../_shared/ai.ts";
  
  const corsHeaders = {
    "Access-Control-Allow-Origin": "*",
@@ -30,7 +31,6 @@
    try {
      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
      const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-     const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
      
      const supabase = createClient(supabaseUrl, supabaseServiceKey);
      const { action, recommendationId, baseUrl }: AnalyzeRequest = await req.json();
@@ -89,11 +89,9 @@
  
      // Analyze pages
      if (action === "analyze") {
-       if (!lovableApiKey) {
-         throw new Error("LOVABLE_API_KEY not configured");
-       }
+       aiClient(); // fail fast if ANTHROPIC_API_KEY is not configured
  
-       const siteBaseUrl = baseUrl || "https://x402info.lovable.app";
+       const siteBaseUrl = baseUrl || Deno.env.get("SITE_URL") || "https://x402info.com";
        console.log("Analyzing site:", siteBaseUrl);
  
        // Fetch each page and analyze
@@ -135,19 +133,38 @@
            };
  
            // Use AI to analyze and suggest improvements
-           const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-             method: "POST",
-             headers: {
-               Authorization: `Bearer ${lovableApiKey}`,
-               "Content-Type": "application/json",
+           const recSchema = {
+             type: "object",
+             properties: {
+               recommendations: {
+                 type: "array",
+                 items: {
+                   type: "object",
+                   properties: {
+                     type: {
+                       type: "string",
+                       enum: ["title", "meta_description", "h1", "canonical", "og_title", "og_description", "images", "content", "schema"],
+                     },
+                     current: { type: "string" },
+                     recommended: { type: "string" },
+                     priority: { type: "string", enum: ["high", "medium", "low"] },
+                     reason: { type: "string" },
+                   },
+                   required: ["type", "current", "recommended", "priority", "reason"],
+                   additionalProperties: false,
+                 },
+               },
              },
-             body: JSON.stringify({
-               model: "google/gemini-2.5-flash",
-               messages: [
-                 {
-                   role: "system",
-                   content: `You are an SEO expert. Analyze the current SEO elements and provide specific, actionable recommendations. 
- Return a JSON array of recommendations, each with:
+             required: ["recommendations"],
+             additionalProperties: false,
+           };
+
+           // deno-lint-ignore no-explicit-any
+           let recommendations: any[] = [];
+           try {
+             const result = await generateJSON<{ recommendations: unknown[] }>({
+               system: `You are an SEO expert. Analyze the current SEO elements and provide specific, actionable recommendations. 
+ Return a JSON object {"recommendations": [...]}, each recommendation with:
  - type: "title" | "meta_description" | "h1" | "canonical" | "og_title" | "og_description" | "images" | "content" | "schema"
  - current: the current value (can be empty string)
  - recommended: your specific recommended value or action
@@ -158,10 +175,7 @@
  For title tags: aim for 50-60 characters with primary keyword.
  For meta descriptions: aim for 150-160 characters, compelling and action-oriented.
  For H1: should be unique and contain primary keyword.`,
-                 },
-                 {
-                   role: "user",
-                   content: `Analyze this page: ${page.name} (${pageUrl})
+               user: `Analyze this page: ${page.name} (${pageUrl})
  
  Current SEO elements:
  - Title: "${currentSeo.title}" (${currentSeo.title.length} chars)
@@ -174,28 +188,13 @@
  
  The site is about x402 Protocol - HTTP 402 micropayments, AI agent payments, and web monetization.
  
- Return only a JSON array of recommendations.`,
-                 },
-               ],
-             }),
-           });
- 
-           if (!aiResponse.ok) {
-             console.error("AI error for", page.name, await aiResponse.text());
-             continue;
-           }
- 
-           const aiResult = await aiResponse.json();
-           let recommendations = [];
-           
-           try {
-             const content = aiResult.choices?.[0]?.message?.content || "[]";
-             // Extract JSON from markdown code blocks if present
-             const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-             const jsonStr = jsonMatch ? jsonMatch[1] : content;
-             recommendations = JSON.parse(jsonStr);
+ Return the recommendations as JSON.`,
+               maxTokens: 16000,
+               jsonSchema: recSchema,
+             });
+             recommendations = result.recommendations ?? [];
            } catch (e) {
-             console.error("Failed to parse AI response for", page.name, e);
+             console.error("AI error for", page.name, e);
              continue;
            }
  
