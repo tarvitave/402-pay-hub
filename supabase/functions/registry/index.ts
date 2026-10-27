@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { isAdmin } from "../_shared/admin.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -78,6 +79,10 @@ serve(async (req: Request): Promise<Response> => {
         .order("name");
       if (error) throw error;
       return json({ endpoints: data ?? [] });
+    }
+
+    if ((action === "admin-list" || action === "set-approval") && !isAdmin(req)) {
+      return json({ error: "Forbidden" }, 403);
     }
 
     if (action === "admin-list") {

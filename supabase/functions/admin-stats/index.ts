@@ -33,10 +33,21 @@ const handler = async (req: Request): Promise<Response> => {
       .select("*", { count: "exact", head: true })
       .not("unsubscribed_at", "is", null);
 
-    // Fetch email event counts by type
-    const { data: eventCounts } = await supabase
-      .from("email_events")
-      .select("event_type");
+    // Count email events by type in the database (a plain select is capped at 1000 rows)
+    const countEvents = async (types: string[]) => {
+      const { count } = await supabase
+        .from("email_events")
+        .select("*", { count: "exact", head: true })
+        .in("event_type", types);
+      return count || 0;
+    };
+    const [delivered, bounced, spam, opened, clicked] = await Promise.all([
+      countEvents(["delivered", "delivery", "Delivery"]),
+      countEvents(["bounced", "bounce", "Bounce"]),
+      countEvents(["spam", "spamcomplaint", "spam_complaint", "SpamComplaint"]),
+      countEvents(["opened", "open", "Open"]),
+      countEvents(["clicked", "click", "Click"]),
+    ]);
 
     // Fetch full subscribers list (newest first)
     const { data: subscribersList } = await supabase
@@ -51,24 +62,7 @@ const handler = async (req: Request): Promise<Response> => {
       .order("created_at", { ascending: false })
       .limit(500);
 
-    const counts: Record<string, number> = {
-      delivered: 0,
-      bounced: 0,
-      spam: 0,
-      opened: 0,
-      clicked: 0,
-    };
-
-    if (eventCounts) {
-      for (const event of eventCounts) {
-        const type = event.event_type?.toLowerCase() || "";
-        if (type === "delivered" || type === "delivery") counts.delivered++;
-        else if (type === "bounced" || type === "bounce") counts.bounced++;
-        else if (type === "spam" || type === "spamcomplaint") counts.spam++;
-        else if (type === "opened" || type === "open") counts.opened++;
-        else if (type === "clicked" || type === "click") counts.clicked++;
-      }
-    }
+    const counts = { delivered, bounced, spam, opened, clicked };
 
     const stats = {
       subscribers: {
@@ -87,7 +81,7 @@ const handler = async (req: Request): Promise<Response> => {
       },
       subscribersList: subscribersList || [],
       recentEvents: recentEvents || [],
-      totalEvents: eventCounts?.length || 0,
+      totalEvents: recentEvents?.length || 0,
     };
 
     console.log("Stats:", stats);

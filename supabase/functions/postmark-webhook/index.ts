@@ -13,7 +13,14 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const payload = await req.json();
+    // Postmark checks the URL when a webhook is saved; answer anything without an event with 200
+    const payload = await req.json().catch(() => null);
+    if (!payload?.RecordType) {
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
     console.log("Received Postmark webhook:", JSON.stringify(payload));
 
     // Initialize Supabase client

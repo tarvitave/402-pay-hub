@@ -2,7 +2,9 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+// The /admin page goes through Caddy's password-protected /admin-api proxy on the site's own domain
+const IS_ADMIN_PAGE = typeof window !== "undefined" && window.location.pathname.startsWith("/admin");
+const SUPABASE_URL = IS_ADMIN_PAGE ? `${window.location.origin}/admin-api` : import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 // Import the supabase client like this:

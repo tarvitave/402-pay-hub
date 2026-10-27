@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { isAdmin } from "../_shared/admin.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -150,6 +151,13 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Get analytics — use RPC / raw SQL to aggregate server-side and avoid the 1000-row limit
     if (action === "get") {
+      if (!isAdmin(req)) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - days);
       startDate.setHours(0, 0, 0, 0);
