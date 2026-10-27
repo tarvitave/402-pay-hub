@@ -37,7 +37,7 @@ const Tutorials = () => {
           name="description"
           content="Learn to integrate x402 micropayments with step-by-step tutorials for Express.js, Next.js, Cloudflare Workers, Python, and AI agents."
         />
-        <link rel="canonical" href="https://x402info.lovable.app/tutorials" />
+        <link rel="canonical" href="https://x402info.com/tutorials" />
       </Helmet>
       <Navbar />
 

@@ -25,7 +25,7 @@ const CompareDetail = () => {
       <Helmet>
         <title>{cmp.title}</title>
         <meta name="description" content={cmp.metaDescription} />
-        <link rel="canonical" href={`https://x402info.lovable.app/compare/${cmp.slug}`} />
+        <link rel="canonical" href={`https://x402info.com/compare/${cmp.slug}`} />
         <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
       </Helmet>
       <Navbar />

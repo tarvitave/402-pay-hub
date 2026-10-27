@@ -15,7 +15,7 @@ const Comparisons = () => {
           name="description"
           content="Compare x402 to L402, Lightning Network, Stripe, and other payment protocols. Side-by-side feature matrices and recommendations."
         />
-        <link rel="canonical" href="https://x402info.lovable.app/compare" />
+        <link rel="canonical" href="https://x402info.com/compare" />
       </Helmet>
       <Navbar />
       <main className="pt-24 pb-16">

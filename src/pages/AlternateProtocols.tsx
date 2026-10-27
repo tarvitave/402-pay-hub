@@ -131,7 +131,7 @@ const AlternateProtocols = () => {
           name="keywords"
           content="agentic payments, L402, Open Payments, Interledger, Paymail, Web Monetization, ENS, payment channels, NWC, machine to machine payments, AI agent payments"
         />
-        <link rel="canonical" href="https://x402info.lovable.app/protocols" />
+        <link rel="canonical" href="https://x402info.com/protocols" />
       </Helmet>
       <Navbar />
 

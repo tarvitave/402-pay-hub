@@ -13,7 +13,7 @@
    const [copied, setCopied] = useState(false);
    const { toast } = useToast();
  
-   const fullUrl = url.startsWith("http") ? url : `https://x402info.lovable.app${url}`;
+   const fullUrl = url.startsWith("http") ? url : `https://x402info.com${url}`;
    
    const shareOnTwitter = () => {
      const text = encodeURIComponent(`${title}\n\n`);

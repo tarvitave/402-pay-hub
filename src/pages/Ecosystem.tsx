@@ -149,7 +149,7 @@ const Ecosystem = () => {
       <Helmet>
         <title>x402 Ecosystem | Projects, Tools & Integrations Directory</title>
         <meta name="description" content="Explore the x402 ecosystem — discover projects, tools, platforms, and integrations building with the HTTP 402 payment protocol for AI agents and micropayments." />
-        <link rel="canonical" href="https://x402info.lovable.app/ecosystem" />
+        <link rel="canonical" href="https://x402info.com/ecosystem" />
       </Helmet>
       <Navbar />
 

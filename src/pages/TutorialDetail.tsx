@@ -34,7 +34,7 @@ const TutorialDetail = () => {
       <Helmet>
         <title>{tutorial.title} | x402 Tutorial</title>
         <meta name="description" content={tutorial.excerpt} />
-        <link rel="canonical" href={`https://x402info.lovable.app/tutorials/${tutorial.slug}`} />
+        <link rel="canonical" href={`https://x402info.com/tutorials/${tutorial.slug}`} />
       </Helmet>
       <Navbar />
 

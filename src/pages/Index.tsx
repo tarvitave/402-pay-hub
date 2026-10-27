@@ -18,7 +18,7 @@ const Index = () => {
         <title>x402 Protocol | HTTP 402 Micropayments for Web APIs & AI Agents</title>
         <meta name="description" content="Implement HTTP 402 Payment Required for micropayments, pay-per-use API monetization, and machine-to-machine payments. Build stablecoin & Lightning Network integrations without complex billing." />
         <meta name="keywords" content="HTTP 402, x402 protocol, micropayments, pay per use API, API monetization, stablecoin payments, cryptocurrency micropayments, AI agent payments, web monetization" />
-        <link rel="canonical" href="https://x402info.lovable.app/" />
+        <link rel="canonical" href="https://x402info.com/" />
       </Helmet>
       <Navbar />
       <Hero />

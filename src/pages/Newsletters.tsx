@@ -62,7 +62,7 @@ const Newsletters = () => {
         <title>x402 Weekly Newsletter | Micropayment Protocol Updates & API Payment News</title>
         <meta name="description" content="Subscribe to the x402 weekly digest for HTTP 402 protocol updates, facilitator news, new micropayment APIs, security bulletins, and integration tutorials delivered to your inbox." />
         <meta name="keywords" content="x402 newsletter, micropayment news, HTTP 402 updates, API payment newsletter, web monetization news, cryptocurrency payment updates, protocol weekly digest" />
-        <link rel="canonical" href="https://x402info.lovable.app/newsletters" />
+        <link rel="canonical" href="https://x402info.com/newsletters" />
       </Helmet>
       <Navbar />
       

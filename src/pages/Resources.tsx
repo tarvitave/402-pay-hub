@@ -142,7 +142,7 @@ const Resources = () => {
         <title>x402 Developer Resources | SDKs, Documentation & API Payment Integration</title>
         <meta name="description" content="Complete x402 protocol documentation, Node.js/Python/Go/Rust SDKs, video tutorials, and developer community. Build pay-per-use APIs with HTTP 402 micropayments." />
         <meta name="keywords" content="x402 SDK, HTTP 402 documentation, micropayment API library, Node.js payment SDK, Python payment integration, pay per API implementation, developer resources" />
-        <link rel="canonical" href="https://x402info.lovable.app/resources" />
+        <link rel="canonical" href="https://x402info.com/resources" />
       </Helmet>
       <Navbar />
       

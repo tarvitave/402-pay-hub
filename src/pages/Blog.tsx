@@ -89,7 +89,7 @@ const Blog = () => {
         <title>x402 Blog | Micropayment Tutorials, API Monetization & HTTP 402 Guides</title>
         <meta name="description" content="Technical tutorials on implementing HTTP 402 micropayments, pay-per-API guides, AI agent payment integration, and web monetization strategies without advertising." />
         <meta name="keywords" content="micropayment tutorial, HTTP 402 implementation guide, pay per API tutorial, AI agent payments, web monetization blog, stablecoin integration, Lightning Network API" />
-        <link rel="canonical" href="https://x402info.lovable.app/blog" />
+        <link rel="canonical" href="https://x402info.com/blog" />
       </Helmet>
       <Navbar />
       

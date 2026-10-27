@@ -58,7 +58,7 @@ const Glossary = () => {
       <Helmet>
         <title>x402 Glossary | Key Terms & Concepts for HTTP 402 Payments</title>
         <meta name="description" content="A comprehensive glossary of x402, HTTP 402, micropayment, and agentic payment terminology. Learn the key concepts behind internet-native payments." />
-        <link rel="canonical" href="https://x402info.lovable.app/glossary" />
+        <link rel="canonical" href="https://x402info.com/glossary" />
       </Helmet>
       <Navbar />
 

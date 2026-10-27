@@ -90,7 +90,7 @@ const Marketplace = () => {
         <title>x402 API Marketplace | Discover Pay-Per-Use HTTP 402 Enabled Services</title>
         <meta name="description" content="Browse the x402 Bazaar marketplace for cryptocurrency-payable APIs. Find AI inference endpoints, data APIs, and machine-to-machine services accepting instant micropayments." />
         <meta name="keywords" content="x402 marketplace, pay per use API directory, HTTP 402 API list, cryptocurrency API payments, AI API marketplace, micropayment enabled services, bazaar discovery" />
-        <link rel="canonical" href="https://x402info.lovable.app/marketplace" />
+        <link rel="canonical" href="https://x402info.com/marketplace" />
       </Helmet>
       <Navbar />
       

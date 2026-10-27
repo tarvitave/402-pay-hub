@@ -71,7 +71,7 @@ const UseCases = () => {
       <Helmet>
         <title>x402 Use Cases | Real-World Micropayment Applications</title>
         <meta name="description" content="Explore real-world x402 use cases: AI API monetization, premium data feeds, content micropayments, IoT machine-to-machine payments, and more." />
-        <link rel="canonical" href="https://x402info.lovable.app/use-cases" />
+        <link rel="canonical" href="https://x402info.com/use-cases" />
       </Helmet>
       <Navbar />
 
