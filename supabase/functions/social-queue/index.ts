@@ -25,6 +25,7 @@ async function generatePosts(supabase: ReturnType<typeof createClient>) {
   const { data: newsletters } = await supabase
     .from("newsletters")
     .select("slug, title, excerpt, content, date")
+    .eq("published", true)
     .order("created_at", { ascending: false })
     .limit(2);
 

@@ -23,7 +23,6 @@ const resources = [
       { title: "x402-node", description: "Node.js SDK for x402 protocol", link: "https://github.com/coinbase/x402/tree/main/typescript", language: "JavaScript" },
       { title: "x402-python", description: "Python library for x402 implementation", link: "https://github.com/coinbase/x402/tree/main/python", language: "Python" },
       { title: "x402-go", description: "Go package for x402 protocol", link: "https://github.com/coinbase/x402/tree/main/go", language: "Go" },
-      { title: "x402-rust", description: "Rust crate for x402 implementation", link: "https://github.com/coinbase/x402/tree/main/rust", language: "Rust" },
     ]
   },
   {
@@ -32,7 +31,6 @@ const resources = [
     items: [
       { title: "Discord Server", description: "Join developers discussing x402", link: "https://discord.gg/cdp", icon: MessageCircle },
       { title: "GitHub Organization", description: "Contribute to open source implementations", link: "https://github.com/coinbase/x402", icon: Github },
-      { title: "Twitter/X", description: "Follow for protocol updates and news", link: "https://x.com/coinaboratorio" },
     ]
   },
 ];
@@ -61,13 +59,6 @@ const youtubeVideos = [
     description: "How autonomous AI agents can use x402 for machine-to-machine payments"
   },
   // Other videos
-  { 
-    title: "HTTP 402: Enabling Payments on the Web", 
-    author: "Coinbase Developer", 
-    videoId: "3tEoLNMr5lY",
-    pinned: false,
-    description: "Official overview of the HTTP 402 status code and x402 implementation"
-  },
   { 
     title: "Micropayments with x402 Protocol", 
     author: "Web3 Weekly", 
